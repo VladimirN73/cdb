@@ -1,0 +1,5 @@
+﻿-- a correct Update Script 
+
+DECLARE @id int
+
+SET  @id=1

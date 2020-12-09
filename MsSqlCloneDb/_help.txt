@@ -1,0 +1,123 @@
+﻿
+Quick Help
+
+mssqlclonedb -dbSource="source" -dbTarget="target"
+
+-------------------------------------------------------
+Long Help
+-------------------------------------------------------
+
+Command-line Parameter bzw Optionen
+
+-help - wenn diese Option gesetzt ist, dann wird diese Hilfe angezeigt und alle weitere Parameter werden ignoriert
+
+-streamConsoleOutput - wenn diese Option gesetzt ist, dann wird der Consolen-Output umgeleitet in Files in dem Pfad die MsSqlConeDb.exe ausgeführt wird. 
+                       Consolen-Ausgaben werden in die Datei ConsoleOutput.txt geschrieben und die Fehlerausgabe bei einem Abbruch in die ConsoleError.txt.
+
+-dbSource - enthält entweder enthält den kompletten Connection-String zur Quell-DB oder den Namen des ConnectionString zur Quell-DB aus der App.Config. Wenn dieser Command-Line-Parameter angegeben ist (und dbSourceConnectionString nicht) 
+muss in der App.Config ein entsprechender ConnectionString vorhanden sein. Wenn Source nicht gesetzt ist, dann werden die Schritte CreateSchema und TransferData nicht ausgeführt.
+
+-dbTarget - ähnlich wie dbSource. Verbindung zur Ziel-Datenbank
+
+-skipTables - enthält die Komma-Separierte-Liste der Tabellen. Die Daten aus der Tabellen werden nicht von Quell-DB nach Ziel-DB übergetragen. Die Daten in der Ziel.DB werden gelöscht
+              Wenn den Parameter den Wert "*" hat, dann werde gar keine tabellen übertragen, in dem Fall wird nur das Schema kopiert
+		  
+-restoreTables - enthält die Komma-Separierte-Liste der Tabellen. Die Daten aus der Tabellen werden nicht von Quell-DB nach Ziel-DB übergetragen. Die Daten in der Ziel-DB werden beibehalten
+
+-mergeTables - enthält die Komma-Separierte-Liste der Tabellen. Die Daten in der Tabellen werden in der Ziel-DB mit der Daten aus der Quell-DB zusammengeführt. 
+Die Regeln, wie die Daten zusammengeführt werden sollen, werden in SQL-Skripten definiert werden. Der Skript wird (bzw die Skripte werden) im Parameter -mergeScripts defininiert, ectl. für den Merge erforderliche Schema-Anpassungen werden im Parameter -mergeSchemaScripts definiert
+
+-mergeSchemaScripts - enthält die Komma-Separierte-Liste der Skripten. Über diese Skripte werden evtl. erforderliche Anpassungen des aus der Quell-DB übernommenen Schemas vor der Sicherung der mergeTables-Tabellen durchgeführt (v.a. bei Strukturerweiterungn in den zu mergenden Tabellen, z.B. Spaltenerweiterung in Ziel-DB)
+
+-mergeScripts - enthält die Komma-Separierte-Liste der Skripten. Diese Skripte werden für die Zusammenführung (Merge) der Daten aus Quell- und Ziel- Datenbanken verwendet
+
+-updateScripts - enthält die Komma-Separierte-Liste der Skripten.  Diese Scripte werden gleich nach der Daten-Übertragung ausgeführt, d.h. vor 'restore' und 'merge'
+
+-finalScripts - enthält die Komma-Separierte-Liste der Skripten.  Diese Scripte werden am Ende des Klon-Prozess ausgeführt
+
+
+Die Command-Line-Parameter, sofern übergeben, überschreiben die Parameter aus der App.Config. Dabei können die übergebenen Parameter auch leer sein (Bsp.: skipTables="")
+
+Soll bspw. keine Tabelle bei der Daten-Übertragung übersprungen werden, wird durch den Command-Line-Parameter -skipTables="" die Konfiguration aus der App.Config ignoriert.
+Wird in der Command-Line kein 'skipTables' Parameter angegeben, so wird der Wert aus App.config übernommen.
+
+-------------------------------------------------------
+Beispiel
+-------------------------------------------------------
+MsSqlCloneDb.exe  ^
+ -dbSource="Data Source=localhost;Initial Catalog=ICLx_source; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -dbTarget="Data Source=localhost;Initial Catalog=ICLx_target; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -skipTables="JobHistory,Job,TaskMeldungDatensatzVorkommnisDetail,TaskMeldungDatensatzVorkommnis,TaskMeldungDatensatz" ^
+ -restoreTables="" ^
+ -finalScripts="SQL_FixDatabase.sql"                  
+-------------------------------------------------------
+Beispiel zum Clone einer MANDANTEN-DB
+-------------------------------------------------------
+MsSqlCloneDb.exe  ^
+ -dbSource="Data Source=localhost;Initial Catalog=ICLx_source; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -dbTarget="Data Source=localhost;Initial Catalog=ICLx_target; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -skipTables="JobHistory,Job,TaskMeldungDatensatzVorkommnisDetail,TaskMeldungDatensatzVorkommnis,TaskMeldungDatensatz" ^
+ -restoreTables="Konfiguration.MandantConfiguration" ^
+ -mergeTables="MandantConfigurationStructure, MandantConfigurationStructureLang" ^
+ -mergeScripts="SQL_Merge_MandantConfigurationStructure.sql" ^
+ -finalScripts="SQL_AutoCreate_MandantConfiguration.sql, SQL_FixDatabase.sql"
+
+ -------------------------------------------------------
+Beispiel zum Clone einer GLOBALEN-DB
+-------------------------------------------------------
+MsSqlCloneDb.exe  ^
+ -dbSource="Data Source=localhost;Initial Catalog=ICLx_source; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -dbTarget="Data Source=localhost;Initial Catalog=ICLx_target; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -skipTables="JobHistory,Job,TaskMeldungDatensatzVorkommnisDetail,TaskMeldungDatensatzVorkommnis,TaskMeldungDatensatz" ^
+ -restoreTables="global.Mandant, global.GlobalConfiguration" ^
+ -mergeTables="GlobalConfigurationStructure, GlobalConfigurationStructureLang" ^
+ -mergeScripts="SQL_Merge_GlobalConfigurationStructure.sql" ^
+ -finalScripts="SQL_AutoCreate_GlobalConfiguration.sql,SQL_FixDatabase.sql"
+
+-------------------------------------------------------
+Beispiel zum Clone einer DB, wenn GLOBAL-DB & MANDANT-DB in der physisch selben DATENBANK liegen
+-------------------------------------------------------
+MsSqlCloneDb.exe  ^
+ -dbSource="Data Source=localhost;Initial Catalog=ICLx_source; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -dbTarget="Data Source=localhost;Initial Catalog=ICLx_target; Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -skipTables="JobHistory,Job,TaskMeldungDatensatzVorkommnisDetail,TaskMeldungDatensatzVorkommnis,TaskMeldungDatensatz" ^
+ -restoreTables="global.Mandant, global.GlobalConfiguration, Konfiguration.MandantConfiguration" ^
+ -mergeTables="GlobalConfigurationStructure, GlobalConfigurationStructureLang, MandantConfigurationStructure, MandantConfigurationStructureLang" ^
+ -mergeScripts="SQL_Merge_GlobalConfigurationStructure.sql,SQL_Merge_MandantConfigurationStructure.sql" ^
+ -finalScripts="SQL_FixDatabase.sql,SQL_AutoCreate_GlobalConfiguration,SQL_AutoCreate_MandantConfiguration.sql"
+
+-------------------------------------------------------
+Beispiel einer .bat-File für Clone Prod to Int
+-------------------------------------------------------
+echo on 
+set start_all=%time%
+set binfolder="bin"
+cd .\%binfolder%
+
+MsSqlCloneDb.exe ^
+ -dbSource="ICLx_P_DB" ^
+ -dbTarget="ICLx_I_DB" ^
+ -skipTables="Job,JobHistory,IndicatorRawData,TaskAusfuehrung,TaskAusfuehrungQueue,TaskAusfuehrungHistory,TaskMeldungDatensatz,TaskMeldungDatensatzVorkommnis,TaskMeldungDatensatzVorkommnisDetail,TaskMeldungVorgang" ^
+ -restoreTables="global.Mandant,global.GlobalConfiguration,Konfiguration.MandantConfiguration" ^
+ -mergeTables="GlobalConfigurationStructure, GlobalConfigurationStructureLang, MandantConfigurationStructure, MandantConfigurationStructureLang" ^
+ -mergeScripts="SQL_Merge_GlobalConfigurationStructure.sql,SQL_Merge_MandantConfigurationStructure.sql" ^
+ -finalScripts="SQL_FixDatabase.sql,SQL_AutoCreate_GlobalConfiguration,SQL_AutoCreate_MandantConfiguration.sql"
+				                    
+cd ..\
+
+set logfolder="Trace_%date:~6,4%_%date:~3,2%_%date:~0,2%_%time:~0,2%%time:~3,2%_Prod_on_Int"
+set logfolder=%logfolder: =0%
+echo %logfolder%
+mkdir %logfolder%
+
+copy .\%binfolder%\*.sql .\%logfolder%
+copy .\%binfolder%\*.log .\%logfolder%
+del .\%binfolder%\Trace.bak
+copy .\%binfolder%\Trace.log .\%binfolder%\Trace.bak
+del .\%binfolder%\Trace.log
+                  
+set end_all=%time%
+echo STARTTIME: %start_all%
+echo ENDTIME  : %end_all%
+pause 
+
