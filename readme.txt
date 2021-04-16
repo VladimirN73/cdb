@@ -1,6 +1,6 @@
 Clone-Tool
 
- Help info see in .\MsSqlCloneDb\_help.txt
+ Help info see in .\cdb.ConsoleApp\_help.txt
 
 ####################################################### 
 ######		Open Points (Todos) 			###########
@@ -8,6 +8,7 @@ Clone-Tool
 -------------------------------------------------------
 Open Points (Todos)
 -------------------------------------------------------
+*. port it to .net5
 *. Feature - Transfer Data for some tables. Do not re-create the target DB. Example: Transfer only SWIP Tables from Test to Int.
 *. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
 *. Feature - ignore Command
@@ -21,14 +22,25 @@ Open Points (Todos)
 *. Exclusively lock the target DB to enable clone on dbs for automated tests
 *. Feature - check the result of script - usually "select 1 from ...". Use a #temp table?....
 
+
+NOT IMPLEMENTED IN THIS VERSION
+* merge
+* partialtransfer
+* decript parameters
+* ReplaceVariablesInFinalScripts
+
 -------------------------------------------------------
 ####################################################### 
 ######				History 				###########
 ####################################################### 
 -------------------------------------------------------
+08.04.21
+ add initial DI and Configuration
+ 
+06.04.21 
+ review project. Todo - port it to .net5. Review architecture and project structure
+
 09.12.20 
- copied from icx
- remove references on iclx
  push to github
 
 06.10.20 deactivate some step to enable it for OCC&TeaBox projects
@@ -94,7 +106,7 @@ Open Points (Todos)
 -------------------------------------------------------
  x. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
  x. Issue with Date covert
-    INSERT [global].[Mandant] ([MandantId], [Key], [Name], [ExpiresOn], [IsActive], [ConnectionString], [_CreatedBy], [_CreateDate], [_ModifiedBy], [_ModifyDate]) VALUES (11, N'DEV', N'ICLx_Master', NULL, 1, N'Data Source=localhost;Initial Catalog=ICLx_Master;Max Pool Size=10;Persist Security Info=True;User ID=ICLx_Admin;Password=IvE/KackwFOsZ0pYuknzHg==;MultipleActiveResultSets=true;', N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime), N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime))
+    INSERT [global].[Mandant] ([MandantId], [Key], [Name], [ExpiresOn], [IsActive], [ConnectionString], [_CreatedBy], [_CreateDate], [_ModifiedBy], [_ModifyDate]) VALUES (11, N'DEV', N'DB_Master', NULL, 1, N'Data Source=localhost;Initial Catalog=DB_Master;Max Pool Size=10;Persist Security Info=True;User ID=DB_Admin;Password=***;MultipleActiveResultSets=true;', N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime), N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime))
 	Meldung: Bei der Konvertierung eines nvarchar-Datentyps in einen datetime-Datentyp liegt der Wert außerhalb des gültigen Bereichs.
  x. Feature - ignore Command
     ExecuteCommand: ALTER INDEX ALL ON [dbo].[V_ValidationRequirementPlatformVariantCrossJoin] REBUILD
@@ -103,9 +115,9 @@ Open Points (Todos)
  2. Wie soll die App reagieren falls unbekannte Parameter/Optionen angegeben werden (Abbrechen vs Ignorieren) 
  3. Wie soll die App reagieren falls unbekannte Tabellen in Parameter 'skipTables' und 'restoreTables' angegeben sind
  4. Wie soll die App reagieren falls unbekannte Skripte in Parameter 'finalScripts' angegeben sind
- 5. done - Rewrite/remove Connection to PROD-DB (ICLX-9750)
+ 5. done - Rewrite/remove Connection to PROD-DB (DB-9750)
  6. done - parameter 'updateScripts' - to apply update scripts
- 7. done - run Update Scripts (ICLX-9440) eventuell vor dem Merge um den Merge zu ermöglichen
+ 7. done - run Update Scripts (DB-9440) eventuell vor dem Merge um den Merge zu ermöglichen
     Auch 'restoreTables' benötigen die UpdateScripts ...
  8. done - Feature - create only Schema-File (parameter -schemaOnly ? or just do not provide target?)
  9. Feature - re-use available Schema-File (parameter -resuseSchema ?)
@@ -115,4 +127,4 @@ Open Points (Todos)
 13. Feature - check the result of script - usually "select 1 from ...". Use a #temp table?....
 14. Feature - nur bestimmte Tabellen übertragen, z.B. Performance ... re-use parameter -skipTables with negotiation?
 15. Feature - nur eine Tabellen portionsweise übertragen, z.B. Performance  ab ID=xxx
-16. Remove dependencies/references to ICLx
+16. Remove dependencies/references to DB

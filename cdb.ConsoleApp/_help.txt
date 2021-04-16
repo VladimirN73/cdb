@@ -1,0 +1,75 @@
+﻿
+Quick Help
+
+cdb.exe -dbSource="source" -dbTarget="target"
+
+-------------------------------------------------------
+Long Help
+-------------------------------------------------------
+
+Command-line Parameter bzw Optionen
+
+-help - wenn diese Option gesetzt ist, dann wird diese Hilfe angezeigt und alle weitere Parameter werden ignoriert
+
+-dbSource - enthält entweder den kompletten Connection-String zur Quell-DB oder den Namen des ConnectionString zur Quell-DB aus der appsettings.json
+
+-dbTarget - ähnlich wie dbSource. Verbindung zur Ziel-Datenbank
+
+-skipTables - enthält die Komma-Separierte-Liste der Tabellen. Die Daten aus der Tabellen werden nicht von Quell-DB nach Ziel-DB übergetragen. Die Daten in der Ziel-DB werden gelöscht
+              Wenn den Parameter den Wert "*" hat, dann werden gar keine Tabellen übertragen, in dem Fall wird nur das Schema kopiert
+		  
+-restoreTables - enthält die Komma-Separierte-Liste der Tabellen. Die Daten aus der Tabellen werden nicht von Quell-DB nach Ziel-DB übergetragen. Die Daten in der Ziel-DB werden beibehalten.
+
+-updateScripts - enthält die Komma-Separierte-Liste der Skripten.  Diese Scripte werden gleich nach der Daten-Übertragung ausgeführt, d.h. vor 'restore'
+
+-finalScripts  - enthält die Komma-Separierte-Liste der Skripten.  Diese Scripte werden am Ende des Klon-Prozess ausgeführt
+
+
+Die Command-Line-Parameter, sofern übergeben, überschreiben die Parameter aus der App.Config. Dabei können die übergebenen Parameter auch leer sein (Bsp.: skipTables="")
+
+Soll bspw. keine Tabelle bei der Daten-Übertragung übersprungen werden, wird durch den Command-Line-Parameter -skipTables="" die Konfiguration aus der App.Config ignoriert.
+Wird in der Command-Line kein 'skipTables' Parameter angegeben, so wird der Wert aus App.config übernommen.
+
+-------------------------------------------------------
+Beispiel
+-------------------------------------------------------
+cdb.exe  ^
+ -dbSource="Data Source=localhost;Initial Catalog=DB_source; Max Pool Size=10;Persist Security Info=True;User ID=DB_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -dbTarget="Data Source=localhost;Initial Catalog=DB_target; Max Pool Size=10;Persist Security Info=True;User ID=DB_Admin;Password=xxx;MultipleActiveResultSets=False" ^
+ -skipTables="JobHistory,Job" ^
+ -restoreTables="" ^
+ -finalScripts="SQL_FixDatabase.sql"                  
+
+-------------------------------------------------------
+Beispiel einer .bat-Datei für Clone 
+-------------------------------------------------------
+echo on 
+set start_all=%time%
+set binfolder="bin"
+cd .\%binfolder%
+
+cbd.exe ^
+ -dbSource="DB_P_DB" ^
+ -dbTarget="DB_I_DB" ^
+ -skipTables="Job,JobHistory" ^
+ -restoreTables="global.Mandant" ^
+ -finalScripts="SQL_FixDatabase.sql,SQL_AutoCreate_GlobalConfiguration,SQL_AutoCreate_MandantConfiguration.sql"
+				                    
+cd ..\
+
+set logfolder="Trace_%date:~6,4%_%date:~3,2%_%date:~0,2%_%time:~0,2%%time:~3,2%_Prod_on_Int"
+set logfolder=%logfolder: =0%
+echo %logfolder%
+mkdir %logfolder%
+
+copy .\%binfolder%\*.sql .\%logfolder%
+copy .\%binfolder%\*.log .\%logfolder%
+del .\%binfolder%\Trace.bak
+copy .\%binfolder%\Trace.log .\%binfolder%\Trace.bak
+del .\%binfolder%\Trace.log
+                  
+set end_all=%time%
+echo STARTTIME: %start_all%
+echo ENDTIME  : %end_all%
+pause 
+

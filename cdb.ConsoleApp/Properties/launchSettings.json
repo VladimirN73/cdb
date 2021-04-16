@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "cdb.ConsoleApp": {
+      "commandName": "Project",
+      "commandLineArgs": "-helpx"
+    }
+  }
+}
