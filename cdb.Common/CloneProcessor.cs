@@ -105,7 +105,7 @@ namespace cdb.Common
             if (string.IsNullOrEmpty(connectionString)) return;
 
             // Exclude PROD-DB from the target DBs
-            var isProd = !connectionString.ToUpper().Contains("loalhost"); // TODO magic string
+            var isProd = !connectionString.ToLower().Contains("localhost"); // TODO magic string
 
             if (isProd)
             {
