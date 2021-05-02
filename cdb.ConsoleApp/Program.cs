@@ -13,7 +13,7 @@ namespace cdb.ConsoleApp
     {
         public static void Main(string[] args)
         {
-            using var host = CreateHostBuilder(args).Build();
+            using var host = CreateHostBuilder(System.Array.Empty<string>()).Build();
             var app = host.Services.GetRequiredService<ConsoleApp>();
             app.Run(args);
         }

@@ -2,7 +2,11 @@
   "profiles": {
     "cdb.ConsoleApp": {
       "commandName": "Project",
-      "commandLineArgs": "-helpx"
+      "commandLineArgs": "-helpx -dbSource=local_source -dbTarge=local_target",
+      "environmentVariables": {
+        "Key": "Value",
+        "DOTNET_Environment": "Development"
+      }
     }
   }
 }

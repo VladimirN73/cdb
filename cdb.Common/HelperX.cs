@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
@@ -127,7 +126,7 @@ namespace cdb.Common
 
         /// <summary>
         /// Einlesen eines Strings aus einem File unter Berücksichtigung des passenden Encodings (wg. Sonderzeichen in File-Inhalt, z.B. SQL-Inserts mit Umlauten)
-        /// Dabei werden mehrere Encodings versucht und bei Vorhandensein von Nicht-ANSI Zeichen (ANSI: Code < 256) das nächste Encoding versucht
+        /// Dabei werden mehrere Encodings versucht und bei Vorhandensein von Nicht-ANSI Zeichen (ANSI: Code kleiner als 256) das nächste Encoding versucht
         /// </summary>
         /// <param name="fileName">Dateiname der Textdatei</param>
         /// <returns>Ausgelesener String</returns>
@@ -179,19 +178,5 @@ namespace cdb.Common
             return ret;
         }
 
-        public static string GetConnectionStringByKey(this IConfiguration config, string strKey)
-        {
-            if (strKey.IsNullOrEmpty()) return "";
-
-            var list = config
-                .GetSection("ConnectionStrings")
-                .GetChildren()
-                .ToList();
-
-            var item = list
-                .FirstOrDefault(x => string.Equals(x.Key.Trim(), strKey.Trim(), StringComparison.CurrentCultureIgnoreCase));
-
-            return item?.Value ?? "";
-        }
     }
 }

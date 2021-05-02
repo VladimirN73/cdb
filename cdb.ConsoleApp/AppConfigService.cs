@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace cdb.ConsoleApp
 {
@@ -14,7 +12,6 @@ namespace cdb.ConsoleApp
         }
 
         public string AppVersion =>  _config["version"] ?? "n/a";
-
 
     }
 }

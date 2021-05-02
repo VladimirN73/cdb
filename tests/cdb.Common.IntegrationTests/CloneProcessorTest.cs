@@ -288,7 +288,7 @@ GO
         ";
 
             var resSuccess = _sut.ExecuteScriptFromString(script, targetStringBuilder, true, true);
-            Assert.IsTrue(resSuccess, "Fehler bei ExecuteScriptFromString");
+            Assert.IsTrue(resSuccess, "Error by ExecuteScriptFromString");
 
             CheckGlobalConfigurationStructureLang(targetStringBuilder, 2);
 
@@ -467,7 +467,7 @@ GO
             catch (Exception ex)
             {
                 logger?.Log(
-                    string.Format("Fehler: Das Query konnte nicht ausgeführt werden:{2}{0}{2}Meldung:{2}{1}",
+                    string.Format("Error: The query cannot be executed:{2}{0}{2} Message:{2}{1}",
                         strSelect, ex.Message, Environment.NewLine));
 
                 throw;

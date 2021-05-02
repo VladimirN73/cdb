@@ -21,7 +21,30 @@ Open Points (Todos)
 *. parameter 'initScripts' - scripts before db modifications, to check for example if the maintanence mode is activated
 *. Exclusively lock the target DB to enable clone on dbs for automated tests
 *. Feature - check the result of script - usually "select 1 from ...". Use a #temp table?....
-
+x. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
+x. Issue with Date covert
+   INSERT [global].[Mandant] ([MandantId], [Key], [Name], [ExpiresOn], [IsActive], [ConnectionString], [_CreatedBy], [_CreateDate], [_ModifiedBy], [_ModifyDate]) VALUES (11, N'DEV', N'DB_Master', NULL, 1, N'Data Source=localhost;Initial Catalog=DB_Master;Max Pool Size=10;Persist Security Info=True;User ID=DB_Admin;Password=***;MultipleActiveResultSets=true;', N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime), N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime))
+   Meldung: Bei der Konvertierung eines nvarchar-Datentyps in einen datetime-Datentyp liegt der Wert außerhalb des gültigen Bereichs.
+x. Feature - ignore Command
+   ExecuteCommand: ALTER INDEX ALL ON [dbo].[V_ValidationRequirementPlatformVariantCrossJoin] REBUILD
+   weil das Kommando schlaegt immer fehl und verbraucht viel Zeit (über 5 Minuten) 
+ 1. done- Password in dbSourceConnectionString und dbTargetConnectionString verschlüsseln
+ 2. Wie soll die App reagieren falls unbekannte Parameter/Optionen angegeben werden (Abbrechen vs Ignorieren) 
+ 3. Wie soll die App reagieren falls unbekannte Tabellen in Parameter 'skipTables' und 'restoreTables' angegeben sind
+ 4. Wie soll die App reagieren falls unbekannte Skripte in Parameter 'finalScripts' angegeben sind
+ 5. done - Rewrite/remove Connection to PROD-DB (DB-9750)
+ 6. done - parameter 'updateScripts' - to apply update scripts
+ 7. done - run Update Scripts (DB-9440) eventuell vor dem Merge um den Merge zu ermöglichen
+    Auch 'restoreTables' benötigen die UpdateScripts ...
+ 8. done - Feature - create only Schema-File (parameter -schemaOnly ? or just do not provide target?)
+ 9. Feature - re-use available Schema-File (parameter -resuseSchema ?)
+10. parameter 'initScripts' - scripts before db modifications, to check for example if the maintanence mode is activated
+11. done - finalScripts - modify the connection strings if cloned from Prod-Db 
+12. Exclusively lock the target DB to enable clone on dbs for automated tests
+13. Feature - check the result of script - usually "select 1 from ...". Use a #temp table?....
+14. Feature - nur bestimmte Tabellen übertragen, z.B. Performance ... re-use parameter -skipTables with negotiation?
+15. Feature - nur eine Tabellen portionsweise übertragen, z.B. Performance  ab ID=xxx
+16. Remove dependencies/references to DB
 
 NOT IMPLEMENTED IN THIS VERSION
 * merge
@@ -104,27 +127,3 @@ NOT IMPLEMENTED IN THIS VERSION
 -------------------------------------------------------
 Open Points (Todos)
 -------------------------------------------------------
- x. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
- x. Issue with Date covert
-    INSERT [global].[Mandant] ([MandantId], [Key], [Name], [ExpiresOn], [IsActive], [ConnectionString], [_CreatedBy], [_CreateDate], [_ModifiedBy], [_ModifyDate]) VALUES (11, N'DEV', N'DB_Master', NULL, 1, N'Data Source=localhost;Initial Catalog=DB_Master;Max Pool Size=10;Persist Security Info=True;User ID=DB_Admin;Password=***;MultipleActiveResultSets=true;', N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime), N'INITIAL', CAST(N'2018-09-25 14:47:58.450' AS DateTime))
-	Meldung: Bei der Konvertierung eines nvarchar-Datentyps in einen datetime-Datentyp liegt der Wert außerhalb des gültigen Bereichs.
- x. Feature - ignore Command
-    ExecuteCommand: ALTER INDEX ALL ON [dbo].[V_ValidationRequirementPlatformVariantCrossJoin] REBUILD
-	weil das Kommando schlaegt immer fehl und verbraucht viel Zeit (über 5 Minuten) 
- 1. done- Password in dbSourceConnectionString und dbTargetConnectionString verschlüsseln
- 2. Wie soll die App reagieren falls unbekannte Parameter/Optionen angegeben werden (Abbrechen vs Ignorieren) 
- 3. Wie soll die App reagieren falls unbekannte Tabellen in Parameter 'skipTables' und 'restoreTables' angegeben sind
- 4. Wie soll die App reagieren falls unbekannte Skripte in Parameter 'finalScripts' angegeben sind
- 5. done - Rewrite/remove Connection to PROD-DB (DB-9750)
- 6. done - parameter 'updateScripts' - to apply update scripts
- 7. done - run Update Scripts (DB-9440) eventuell vor dem Merge um den Merge zu ermöglichen
-    Auch 'restoreTables' benötigen die UpdateScripts ...
- 8. done - Feature - create only Schema-File (parameter -schemaOnly ? or just do not provide target?)
- 9. Feature - re-use available Schema-File (parameter -resuseSchema ?)
-10. parameter 'initScripts' - scripts before db modifications, to check for example if the maintanence mode is activated
-11. done - finalScripts - modify the connection strings if cloned from Prod-Db 
-12. Exclusively lock the target DB to enable clone on dbs for automated tests
-13. Feature - check the result of script - usually "select 1 from ...". Use a #temp table?....
-14. Feature - nur bestimmte Tabellen übertragen, z.B. Performance ... re-use parameter -skipTables with negotiation?
-15. Feature - nur eine Tabellen portionsweise übertragen, z.B. Performance  ab ID=xxx
-16. Remove dependencies/references to DB

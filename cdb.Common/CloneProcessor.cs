@@ -109,7 +109,7 @@ namespace cdb.Common
 
             if (isProd)
             {
-                throw new Exception("Prod-DB darf nicht als target-Db benutzt werden");
+                throw new Exception("Prod-DB cannot used as a target DB ");
             }
         }
 
@@ -180,7 +180,7 @@ namespace cdb.Common
             }
             catch (Exception ex)
             {
-                Log($"Fehler in GenerateSchema {source.InitialCatalog}");
+                Log($"Error in GenerateSchema {source.InitialCatalog}");
                 Log("Stacktrace: " + ex.ToString());
                 throw;
             }
@@ -325,7 +325,7 @@ namespace cdb.Common
                 catch (Exception ex)
                 {
                     Log(
-                        string.Format("Fehler: Das Query konnte nicht ausgeführt werden:{2}{0}{2}Meldung:{2}{1}",
+                        string.Format("Error: The query cannot be executed:{2}{0}{2} Message:{2}{1}",
                             sqlBlock, ex.Message, Environment.NewLine));
 
                     retSuccess = false;

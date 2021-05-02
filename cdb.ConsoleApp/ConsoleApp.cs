@@ -4,7 +4,6 @@ using System.Text;
 using cdb.Common;
 using cdb.Module.Console;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace cdb.ConsoleApp
 {
@@ -35,7 +34,7 @@ namespace cdb.ConsoleApp
             {
                 var errorLogBuilder = new StringBuilder();
                 errorLogBuilder.AppendLine("=========================================================");
-                errorLogBuilder.AppendLine($"Fehler/Error:{ex}");
+                errorLogBuilder.AppendLine($"Error: '{ex}'");
                 errorLogBuilder.AppendLine("=========================================================");
 
                 var errorLog = errorLogBuilder.ToString();

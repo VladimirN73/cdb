@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using cdb.Common;
+using cdb.Common.Extensions;
 using Microsoft.Extensions.Configuration;
 
 // ReSharper disable InconsistentNaming
