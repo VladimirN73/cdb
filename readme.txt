@@ -8,7 +8,7 @@ Clone-Tool
 -------------------------------------------------------
 Open Points (Todos)
 -------------------------------------------------------
-*. port it to .net5
+*. iTest - ClearDatabase - ensure Exception if Clear.sql is not found
 *. Feature - Transfer Data for some tables. Do not re-create the target DB. Example: Transfer only SWIP Tables from Test to Int.
 *. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
 *. Feature - ignore Command
@@ -45,6 +45,7 @@ x. Feature - ignore Command
 14. Feature - nur bestimmte Tabellen übertragen, z.B. Performance ... re-use parameter -skipTables with negotiation?
 15. Feature - nur eine Tabellen portionsweise übertragen, z.B. Performance  ab ID=xxx
 16. Remove dependencies/references to DB
+
 
 NOT IMPLEMENTED IN THIS VERSION
 * merge

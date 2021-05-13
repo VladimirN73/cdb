@@ -15,6 +15,8 @@ namespace cdb.Common
 
     public class CloneProcessor :ICloneProcessor
     {
+        public const string SqlClearDatabase = "SQL_ClearDatabase.sql";
+
         private readonly IAppLogger _logger;
         private readonly string _executionId; // use unique Id to enable parallel execution: the 'restore'-scripts will be not overwritten
         
@@ -55,6 +57,13 @@ namespace cdb.Common
             // STEP
             //CreateBackupForTablesToRestore(TargetBuilder);
             //CreateBackupForTablesToMerge(TargetBuilder);
+
+            //// STEP
+            var isSuccess = DoLoadSchema(TargetBuilder, _config.schemaFile);
+            if (!isSuccess)
+            {
+                throw new Exception($@"Error by {nameof(DoLoadSchema)}");
+            }
 
             return true;
         }
@@ -181,11 +190,53 @@ namespace cdb.Common
             catch (Exception ex)
             {
                 Log($"Error in GenerateSchema {source.InitialCatalog}");
-                Log("Stacktrace: " + ex.ToString());
+                Log("Stacktrace: " + ex);
                 throw;
             }
         }
 
+        public bool DoLoadSchema(SqlConnectionStringBuilder target, string schemaFile)
+        {
+            EnsureNonProdDb(target);
+
+            var strMethod = $@"{nameof(DoLoadSchema)}";
+
+            using (new StackLogger(strMethod))
+            {
+                var ret = true;
+
+                // Load Schema only if source and target are provided. 
+                var loadSchema = !string.IsNullOrEmpty(schemaFile) &&
+                                 !string.IsNullOrEmpty(target?.ConnectionString);
+
+                Log($@"target    :{target?.InitialCatalog}");
+                Log($@"schemaFile:{schemaFile}");
+
+                if (!loadSchema)
+                {
+                    // TODO translate
+                    // trace and return
+                    Log("Das Laden der Db-Schema wird übersprungen, da das Schema-File oder die Ziel-Db nicht vorhanden sind");
+                }
+                else
+                {
+                    ClearTargetDatabase(target);
+                    ret = ExecuteScriptFromFile(schemaFile, target);
+                }
+
+                return ret;
+            }
+        }
+
+        protected void ClearTargetDatabase(SqlConnectionStringBuilder target)
+        {
+            EnsureNonProdDb(target);
+            var ret = ExecuteScriptFromFile(SqlClearDatabase, target, false);
+            if (!ret)
+            {
+                throw new Exception($"Error by {nameof(ClearTargetDatabase)} ");
+            }
+        }
 
         //TODO make it internal (or protected)
         public bool ExecuteFinalScripts(SqlConnectionStringBuilder target)
@@ -238,15 +289,18 @@ namespace cdb.Common
             bool continueOnError = true)
         {
             EnsureNonProdDb(target);
-            bool ret;
-            using (var dbConnection = new SqlConnection(target.ConnectionString))
+
+            if (!continueOnError && !File.Exists(fileName))
             {
-                dbConnection.Open();
-
-                ret = ExecuteScriptFromFile(fileName, dbConnection, continueOnError: continueOnError);
-
-                dbConnection.Close();
+                throw new Exception($"File {fileName} not found");
             }
+
+            using var dbConnection = new SqlConnection(target.ConnectionString);
+            dbConnection.Open();
+
+            var ret = ExecuteScriptFromFile(fileName, dbConnection, continueOnError: continueOnError);
+
+            dbConnection.Close();
 
             return ret;
         }

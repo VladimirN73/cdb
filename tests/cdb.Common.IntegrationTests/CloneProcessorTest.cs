@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using cdb.Module.Console;
@@ -14,7 +12,7 @@ using NUnit.Framework;
 namespace cdb.Common.IntegrationTests
 {
     [TestFixture]
-    public class CloneProcessorTest
+    public class CloneProcessorTest :TestBase
     {
         private CloneProcessor _sut;
 
@@ -24,8 +22,6 @@ namespace cdb.Common.IntegrationTests
         private IConfiguration _config;
 
         #region test setup
-
-        private Stopwatch _stopWatch;
 
         [OneTimeSetUp]
         public void OneSetUp()
@@ -42,9 +38,7 @@ namespace cdb.Common.IntegrationTests
         [SetUp]
         public void SetUp()
         {
-            WriteInfo($@"Start execution at {DateTime.Now.ToLocalTime()}");
-            _stopWatch = Stopwatch.StartNew();
-            SetWorkingDirectory();
+            StartTest();
         }
 
         [TearDown]
@@ -361,27 +355,6 @@ GO
             //todo trace parameters
 
             _sut.Execute(toolParameters);
-        }
-
-        private void WriteInfo(string str)
-        {
-            Console.WriteLine(str);
-        }
-
-        private void WriteElapsedTime()
-        {
-            WriteInfo($@"Elapsed Time : {_stopWatch.ElapsedMilliseconds / 1000} second(s)");
-        }
-
-        [SuppressMessage("ReSharper", "UnusedVariable")]
-        private void SetWorkingDirectory()
-        {
-            var str1 = Directory.GetCurrentDirectory();
-            var str2 = AppDomain.CurrentDomain.BaseDirectory;
-            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-            var currentDirectory = Directory.GetCurrentDirectory();
-
-            WriteInfo($@"Current directory='{currentDirectory}'");
         }
 
         private string CreateScriptFile(string strScript)

@@ -5,14 +5,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 
 namespace cdb.Common
 {
     public static class HelperX
     {
         public const string SqlSeparator = "GO";
-
 
         public static void AddLog(string log)
         {
