@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using Microsoft.SqlServer.Management.Smo;
 
 namespace cdb.Common
 {
@@ -14,7 +17,7 @@ namespace cdb.Common
 
     public class CloneProcessor : ICloneProcessor
     {
-        public const string SqlClearDatabase = "SQL_ClearDatabase.sql";
+        public const string SqlClearDatabase = "./scripts/SQL_ClearDatabase.sql";
 
         private readonly IAppLogger _logger;
 
@@ -60,14 +63,10 @@ namespace cdb.Common
             //CreateBackupForTablesToMerge(TargetBuilder);
 
             //// STEP
-            var isSuccess = DoLoadSchema(TargetBuilder, _config.schemaFile);
-            if (!isSuccess)
-            {
-                throw new Exception($@"Error by {nameof(DoLoadSchema)}");
-            }
-
+            DoLoadSchema(TargetBuilder, _config.schemaFile);
+            
             //// STEP
-            //DoTransferData(SourceBuilder, TargetBuilder);
+            DoTransferData(SourceBuilder, TargetBuilder);
 
             //// STEP
             if (!ExecuteUpdateScripts(TargetBuilder))
@@ -188,9 +187,9 @@ namespace cdb.Common
 
         public void DoCreateSchema(string schemaFile, SqlConnectionStringBuilder source)
         {
-            var strMethod = $@"{nameof(DoCreateSchema)}";
+            var strFunc = $@"{nameof(DoCreateSchema)}";
 
-            using (new StackLogger(strMethod))
+            using (new StackLogger(strFunc))
             {
                 Log($@"source   :{source?.InitialCatalog}");
                 Log($@"fileName :{schemaFile}");
@@ -220,37 +219,35 @@ namespace cdb.Common
             }
         }
 
-        public bool DoLoadSchema(SqlConnectionStringBuilder target, string schemaFile)
+        public void DoLoadSchema(SqlConnectionStringBuilder target, string schemaFile)
         {
             EnsureNonProdDb(target);
 
-            var strMethod = $@"{nameof(DoLoadSchema)}";
+            var strFunc = $@"{nameof(DoLoadSchema)}";
 
-            using (new StackLogger(strMethod))
+            using var stacklogger = new StackLogger(strFunc);
+            Log($@"target    :{target?.InitialCatalog}");
+            Log($@"schemaFile:{schemaFile}");
+
+            if (string.IsNullOrEmpty(target?.ConnectionString))
             {
-                var ret = true;
+                Log("The load-schema is skipped, due to the target-db is empty");
+                return;
+            }
 
-                // Load Schema only if source and target are provided. 
-                var loadSchema = !string.IsNullOrEmpty(schemaFile) &&
-                                 !string.IsNullOrEmpty(target?.ConnectionString);
+            if (schemaFile.IsNullOrEmpty())
+            {
+                Log("The load-schema is skipped, due to the schema-file is empty");
+                return;
+            }
+            
+            ClearTargetDatabase(target);
+            
+            var ret = ExecuteScriptFromFile(schemaFile, target, false);
 
-                Log($@"target    :{target?.InitialCatalog}");
-                Log($@"schemaFile:{schemaFile}");
-
-                if (!loadSchema)
-                {
-                    // TODO translate
-                    // trace and return
-                    Log(
-                        "Das Laden der Db-Schema wird übersprungen, da das Schema-File oder die Ziel-Db nicht vorhanden sind");
-                }
-                else
-                {
-                    ClearTargetDatabase(target);
-                    ret = ExecuteScriptFromFile(schemaFile, target);
-                }
-
-                return ret;
+            if (!ret)
+            {
+                throw  new Exception($"Error by {strFunc}");
             }
         }
 
@@ -267,9 +264,9 @@ namespace cdb.Common
         //TODO make it internal (or protected)
         public bool ExecuteUpdateScripts(SqlConnectionStringBuilder target)
         {
-            var strMethod = $@"{nameof(ExecuteUpdateScripts)}";
+            var strFunc = $@"{nameof(ExecuteUpdateScripts)}";
 
-            using (new StackLogger(strMethod))
+            using (new StackLogger(strFunc))
             {
                 return ExecuteScriptsByList(target, _config.updateScripts, false, false);
             }
@@ -278,9 +275,9 @@ namespace cdb.Common
         //TODO make it internal (or protected)
         public bool ExecuteFinalScripts(SqlConnectionStringBuilder target)
         {
-            var strMethod = $@"{nameof(ExecuteFinalScripts)}";
+            var strFunc = $@"{nameof(ExecuteFinalScripts)}";
 
-            using (new StackLogger(strMethod))
+            using (new StackLogger(strFunc))
             {
                 return ExecuteScriptsByList(target, _config.finalScripts, false, false);
             }
@@ -400,8 +397,8 @@ namespace cdb.Common
         {
             EnsureNonProdDb(dbConnection.ConnectionString);
 
-            var strMethod = $@"{nameof(ExecuteScriptFromString)}";
-            if (writeLog) Log($@"--> {strMethod}");
+            var strFunc = $@"{nameof(ExecuteScriptFromString)}";
+            if (writeLog) Log($@"--> {strFunc}");
 
             var retSuccess = true; // no error yet
 
@@ -427,7 +424,7 @@ namespace cdb.Common
                 }
             }
 
-            if (writeLog) Log($@"<-- {strMethod}");
+            if (writeLog) Log($@"<-- {strFunc}");
 
             return retSuccess;
         }
@@ -437,7 +434,7 @@ namespace cdb.Common
             SqlConnection connection,
             bool writelog = true)
         {
-            var strMethod = $@"{nameof(ExecuteCommand)}";
+            var strFunc = $@"{nameof(ExecuteCommand)}";
 
             var affectedRows = -1;
             try
@@ -459,48 +456,259 @@ namespace cdb.Common
             finally
             {
                 var affectedRowsStr = (affectedRows > -1) ? affectedRows.ToString() : "-";
-                if (writelog) HelperX.AddLog($@"{strMethod}: Rows={affectedRowsStr} - {commandText}");
+                if (writelog) HelperX.AddLog($@"{strFunc}: Rows={affectedRowsStr} - {commandText}");
             }
         }
 
-        public bool DoTransferData(
+        public void DoTransferData(
             SqlConnectionStringBuilder source,
             SqlConnectionStringBuilder target)
         {
             EnsureNonProdDb(target);
 
-            var strMethod = $@"{nameof(DoTransferData)}";
+            var strFunc = $@"{nameof(DoTransferData)}";
 
-            using (new StackLogger(strMethod))
+            using var stackLogger = new StackLogger(strFunc);
+
+            TraceConfigDatabases();
+
+            if (_config.SkipAllTables)
             {
-                var ret = true;
+                HelperX.AddLog($"--- {strFunc} : SkipAllTables returns 'true', so no data-transfer is performed");
+                return;
+            }
 
-                TraceConfigDatabases();
+            if (string.IsNullOrEmpty(source?.ConnectionString))
+            {
+                HelperX.AddLog($"--- {strFunc} : dbsource is missing, so no data-transfer is performed");
+                return;
+            }
 
-                if (_config.SkipAllTables)
+            DisableAllCheckConstraintsOnTargetDb(target);
+            DisableAllTriggersOnTargetDb(target);
+            DisableAllIndexesOnTargetDb(target);
+
+            BulkCopy(source, target);
+
+            EnableAllCheckConstraintsOnTargetDb(target);
+            EnableAllTriggersOnTargetDb(target);
+            EnableAllIndexesOnTargetDb(target);
+        }
+
+        private static void EnableAllIndexesOnTargetDb(SqlConnectionStringBuilder target)
+        {
+            HelperX.AddLog("Enabling all indexes on target database.");
+            ModifyTableIndexesOnTargetDb(true, target);
+            ModifyViewIndexesOnTargetDb(true, target);
+        }
+
+        private static void DisableAllIndexesOnTargetDb(SqlConnectionStringBuilder target)
+        {
+            HelperX.AddLog("Disabling all indexes on target database.");
+            ModifyTableIndexesOnTargetDb(false, target);
+            ModifyViewIndexesOnTargetDb(false, target);
+        }
+
+        private static void ModifyTableIndexesOnTargetDb(bool isEnable, SqlConnectionStringBuilder target)
+        {
+            var strMethod = $"{nameof(ModifyTableIndexesOnTargetDb)}({isEnable})";
+
+            var strFormat = "ALTER INDEX [{0}] ON [{1}].[{2}] REBUILD";
+
+            if (!isEnable)
+            {
+                strFormat = "ALTER INDEX [{0}] ON [{1}].[{2}] DISABLE";
+            }
+
+            var consb = target.ConnectionString;
+
+            using (var destConn = new SqlConnection(consb))
+            {
+                destConn.Open();
+
+                var db = TargetDatabase(target);
+
+                foreach (Table table in db.Tables)
                 {
-                    HelperX.AddLog($"--- {strMethod} : SkipAllTables returns 'true', so no data-transfer is performed");
-                }
-                else if (string.IsNullOrEmpty(source?.ConnectionString))
-                {
-                    HelperX.AddLog($"--- {strMethod} : dbsource is missing, so no data-transfer is performed");
-                }
-                else
-                {
-                    //DisableAllCheckConstraintsOnTargetDb(target);
-                    //DisableAllTriggersOnTargetDb(target);
-                    //DisableAllIndexesOnTargetDb(target);
+                    var indexList = table.Indexes.Cast<Microsoft.SqlServer.Management.Smo.Index>()
+                        .Where(w =>
+                            !w.IndexKeyType.Equals(IndexKeyType.DriPrimaryKey) &&
+                            !w.IndexKeyType.Equals(IndexKeyType.DriUniqueKey))
+                        .ToList();
 
-                    //BulkCopy(source, target);
-
-                    //EnableAllCheckConstraintsOnTargetDb(target);
-                    //EnableAllTriggersOnTargetDb(target);
-                    //EnableAllIndexesOnTargetDb(target);
+                    foreach (var index in indexList)
+                    {
+                        var strCommand = string.Format(strFormat, index.Name, table.Schema, table.Name);
+                        try
+                        {
+                            ExecuteCommand(strCommand, destConn);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.TraceInformation($"{strMethod}. Error by table '{table.Name}'");
+                            Trace.TraceError(ex.Message);
+                        }
+                    }
                 }
-
-                return ret;
             }
         }
+
+        private static void ModifyViewIndexesOnTargetDb(bool isEnable, SqlConnectionStringBuilder target)
+        {
+            var strMethod = $"{nameof(ModifyViewIndexesOnTargetDb)}({isEnable})";
+
+            var strFormat = "ALTER INDEX ALL ON [{0}].[{1}] REBUILD";
+
+            if (!isEnable)
+            {
+                strFormat = "ALTER INDEX ALL ON [{0}].[{1}] DISABLE";
+            }
+
+            var consb = target.ConnectionString;
+
+            using (var destConn = new SqlConnection(consb))
+            {
+                destConn.Open();
+
+                var db = TargetDatabase(target);
+
+                var viewList = db.Views.Cast<View>()
+                    .Where(w => w.HasIndex)
+                    .ToList();
+
+                foreach (var v in viewList)
+                {
+                    if (isEnable)
+                    {
+                        var indexList = v.Indexes.Cast<Microsoft.SqlServer.Management.Smo.Index>().ToList();
+
+                        // if more than one index, then activate the clustered index first
+                        if (indexList.Count > 1)
+                        {
+                            // now move clustered index on to of the list
+                            var indexListSorted = indexList.Where(x => x.IsClustered).ToList();
+                            indexListSorted.AddRange(indexList.Where(x => !x.IsClustered));
+
+                            foreach (var index in indexListSorted)
+                            {
+                                var strCommandIndex = $"ALTER INDEX {index.Name} ON [{v.Schema}].[{v.Name}] REBUILD;";
+                                ExecuteCommand(strCommandIndex, destConn);
+                            }
+                        }
+                    }
+
+                    var strCommand = string.Format(strFormat, v.Schema, v.Name);
+                    try
+                    {
+                        ExecuteCommand(strCommand, destConn);
+                    }
+                    catch (Exception ex)
+                    {
+                        HelperX.AddLog($"{strMethod}. Error by View {v.Name}");
+                        HelperX.AddLog(ex.Message);
+                    }
+                }
+            }
+        }
+
+        private static void ModifyChecksOnTargetDb(string strFormat, SqlConnectionStringBuilder target)
+        {
+            using (var destConn = new SqlConnection(target.ConnectionString))
+            {
+                destConn.Open();
+
+                var db = TargetDatabase(target);
+
+                foreach (Table table in db.Tables)
+                {
+                    var checks = table.Checks.Cast<Check>();
+
+                    foreach (var check in checks)
+                    {
+                        var strCommand = string.Format(strFormat, table.Schema, table.Name, check.Name);
+                        ExecuteCommand(strCommand, destConn);
+                    }
+                }
+            }
+        }
+
+        private static void EnableAllCheckConstraintsOnTargetDb(SqlConnectionStringBuilder target)
+        {
+            HelperX.AddLog("Enabling all check constraints on target database.");
+            ModifyChecksOnTargetDb("ALTER TABLE [{0}].[{1}] CHECK CONSTRAINT {2}", target);
+        }
+
+        private static void DisableAllCheckConstraintsOnTargetDb(SqlConnectionStringBuilder target)
+        {
+            HelperX.AddLog("Disabling all check constraints on target database.");
+            ModifyChecksOnTargetDb("ALTER TABLE [{0}].[{1}] NOCHECK CONSTRAINT {2}", target);
+        }
+
+        private static void ModifyTriggersOnTargetDb(string strFormat, SqlConnectionStringBuilder tcsb)
+        {
+            using (var destConn = new SqlConnection(tcsb.ConnectionString))
+            {
+                destConn.Open();
+
+                var db = TargetDatabase(tcsb);
+
+                var tables = db.Tables.Cast<Table>();
+
+                foreach (var t in tables)
+                {
+                    var strCommand = string.Format(strFormat, t.Schema, t.Name);
+                    ExecuteCommand(strCommand, destConn);
+                }
+            }
+        }
+
+        private static void EnableAllTriggersOnTargetDb(SqlConnectionStringBuilder tcsb)
+        {
+            HelperX.AddLog("Enabling all triggers on target database.");
+            ModifyTriggersOnTargetDb("ALTER TABLE [{0}].[{1}] ENABLE TRIGGER ALL", tcsb);
+        }
+
+        private static void DisableAllTriggersOnTargetDb(SqlConnectionStringBuilder tcsb)
+        {
+            HelperX.AddLog("Disabling all triggers on target database.");
+            ModifyTriggersOnTargetDb("ALTER TABLE [{0}].[{1}] DISABLE TRIGGER ALL", tcsb);
+        }
+
+        private void BulkCopy(SqlConnectionStringBuilder scsb, SqlConnectionStringBuilder tcsb)
+        {
+            EnsureNonProdDb(tcsb);
+
+            using var copier = new DbBulkCopy(
+                scsb.DataSource, scsb.InitialCatalog, scsb.UserID, scsb.Password, "", //scsb.NetworkLibrary,
+                tcsb.DataSource, tcsb.InitialCatalog, tcsb.UserID, tcsb.Password, ""  //tcsb.NetworkLibrar
+                );
+            HelperX.AddLog("Daten werden uebertragen");
+            copier.Copy(null, null);
+        }
+
+
+        private static Server TargerServer(SqlConnectionStringBuilder consb)
+        {
+            var server = new Server(consb.DataSource);
+            server.ConnectionContext.LoginSecure = false;
+            server.ConnectionContext.Login = consb.UserID;
+            server.ConnectionContext.Password = consb.Password;
+
+            if (!server.ConnectionContext.IsOpen)
+                server.ConnectionContext.Connect();
+
+            return server;
+
+        }
+
+        private static Database TargetDatabase(SqlConnectionStringBuilder consb)
+        {
+            var db = TargerServer(consb).Databases[consb.InitialCatalog];
+
+            return db;
+
+        }
+
 
     }
 }

@@ -2,7 +2,6 @@
 -- -----------------------------------------------------------------
 -- Set Auto-Increment
 --
--- Ticket: ICLX-8874
 -- -----------------------------------------------------------------
 DECLARE @counter int;
 SET @counter = (SELECT TOP 1 TaskAusfuehrungId FROM [Tasks].[TaskAusfuehrungHistory] ORDER BY TaskAusfuehrungId DESC);
@@ -13,7 +12,6 @@ GO
 -- -----------------------------------------------------------------
 -- Check/Fix Constraints
 --
--- Ticket: ICLX-8825
 -- -----------------------------------------------------------------
 
 -- eine temporäre Tabelle erstellen

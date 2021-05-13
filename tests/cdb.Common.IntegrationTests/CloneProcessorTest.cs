@@ -7,6 +7,7 @@ using System.Linq;
 using cdb.Module.Console;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace cdb.Common.IntegrationTests
@@ -94,19 +95,18 @@ namespace cdb.Common.IntegrationTests
 
             _sut.Execute(config);
 
-            CheckSchemas(config.dbSourceConnectionString, config.dbTargetConnectionString);
+            CompareDbSchemas(config.dbSourceConnectionString, config.dbTargetConnectionString);
         }
 
         [TestCase("dbSourceDB", "dbTargetDB")]
-        [TestCase("dbSourceSimple", "dbTargetSimple")]
         public void Execute_01_Full_Clone(string dbSource, string dbTarget)
         {
             var config = new CloneParametersExt
             {
                 dbSource = dbSource,
                 dbTarget = dbTarget,
-                strSkipTables = "*",
-                strRestoreTables = "global.globalConfiguration",
+                strSkipTables = "",
+                strRestoreTables = "",
                 strUpdateScripts = "",
                 strFinalScripts = ""
             };
@@ -114,14 +114,18 @@ namespace cdb.Common.IntegrationTests
 
             _sut.Execute(config);
 
-            CheckSchemas(config.dbSourceConnectionString, config.dbTargetConnectionString);
+            Assert.IsFalse(DbIsEmpty(dbTarget));
+
+            CompareDbSchemas(config.dbSourceConnectionString, config.dbTargetConnectionString);
+
+            CompareDbContent(config.dbSourceConnectionString, config.dbTargetConnectionString);
         }
 
-        [TestCase("dbTargetSimple", @"Scripts\SQL_Update_01.txt", true)]  // success expected
-        [TestCase("dbTargetSimple", @"Scripts\SQL_Update_02.txt", false)] // Error expected
-        [TestCase("dbTargetSimple", @"Scripts\SQL_Update_02.txt,Scripts\SQL_Update_01.txt", false)]
-        [TestCase("dbTargetSimple", @"Scripts\SQL_Update_01.txt,Scripts\SQL_Update_02.txt", false)]
-        [TestCase("dbTargetSimple", @"Scripts\SQL_Update_*.txt", false)]
+        [TestCase("dbTargetDB", @"Scripts\SQL_Update_01.txt", true)]  // success expected
+        [TestCase("dbTargetDB", @"Scripts\SQL_Update_02.txt", false)] // Error expected
+        [TestCase("dbTargetDB", @"Scripts\SQL_Update_02.txt,Scripts\SQL_Update_01.txt", false)]
+        [TestCase("dbTargetDB", @"Scripts\SQL_Update_01.txt,Scripts\SQL_Update_02.txt", false)]
+        [TestCase("dbTargetDB", @"Scripts\SQL_Update_*.txt", false)]
         public void Execute_UpdateScripts(string dbTarget, string scripts, bool expectedSuccess)
         {
             var config = new CloneParametersExt
@@ -254,7 +258,7 @@ GO
             }
         }
 
-        private void CheckSchemas(string sourceConnectionString, string targetConnectionString)
+        private void CompareDbSchemas(string sourceConnectionString, string targetConnectionString)
         {
             // Select available tables
             var sql = "SELECT sobjects.name as Value FROM sysobjects sobjects WHERE sobjects.xtype = 'U'";
@@ -265,6 +269,28 @@ GO
             var targetList = GetSelectedValues(strTarget);
 
             Assert.AreEqual(sourceList, targetList);
+        }
+
+        private void CompareDbContent(string sourceConnectionString, string targetConnectionString)
+        {
+            // Select available tables
+            var sql = "SELECT sobjects.name as Value FROM sysobjects sobjects WHERE sobjects.xtype = 'U'";
+            var strSource = _sut.ExecuteSelect(sql, sourceConnectionString);
+
+            var res = JArray.Parse(strSource);
+
+            var tableList = res.Children().Select(x => x["Value"]).ToList();
+
+            foreach (var strTable in tableList)
+            {
+                sql = $"select * from {strTable}";
+                var strA = _sut.ExecuteSelect(sql, sourceConnectionString);
+                var strB = _sut.ExecuteSelect(sql, targetConnectionString);
+
+                Assert.AreEqual(strA, strB);
+            }
+
+            int i = 1;
         }
 
         private List<string> GetSelectedValues(string strJson)
@@ -294,6 +320,27 @@ GO
             //todo trace parameters
 
             _sut.Execute(toolParameters);
+        }
+
+        private bool DbIsEmpty(string dbTarget)
+        {
+            var config = new CloneParametersExt
+            {
+                dbTarget = dbTarget
+            };
+
+            config.AdaptParameters(_config);
+
+            _sut.SetConfig(config);
+
+            // Select available tables
+            var sql = "SELECT sobjects.name FROM sysobjects sobjects WHERE sobjects.xtype = 'U'";
+
+            var str = _sut.ExecuteSelect(sql);
+            var strExpected = "[]";
+
+            var ret = str == strExpected;
+            return ret;
         }
 
         private string CreateScriptFile(string strScript)

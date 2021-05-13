@@ -1,3 +1,0 @@
--- Script to test the variable replacement
-SourceDB=#{SourceDB}#
-VariableA=#{VariableA}#
