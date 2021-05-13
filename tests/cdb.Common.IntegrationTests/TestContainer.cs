@@ -27,10 +27,11 @@ namespace cdb.Common.IntegrationTests
         private void AddServices(ServiceCollection services)
         {
             services.AddSingleton<IConfiguration>(_configuration);
-
+            
             Common.ModuleConfiguration.ConfigureServices(services);
             Module.Console.ModuleConfiguration.ConfigureServices(services);
-
+            
+            services.AddSingleton<IAppLogger>(new AppLoggerTest());
         }
 
         public TObject GetService<TObject>()
@@ -46,19 +47,19 @@ namespace cdb.Common.IntegrationTests
 
     public class AppLoggerTest : IAppLogger
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder _sb = new StringBuilder();
 
         public void Log(string str)
         {
-            sb.AppendLine(str);
+            _sb.AppendLine(str);
             Console.WriteLine(str);
         }
 
-        public string LogText => sb.ToString();
+        public string LogText => _sb.ToString();
 
         public void Clear()
         {
-            sb.Clear();
+            _sb.Clear();
         }
     }
 

@@ -74,8 +74,7 @@ namespace cdb.Common.IntegrationTests
             Assert.AreEqual(strExpected, str);
         }
 
-        [TestCase("dbSourceDB", "dbTargetDB")]
-        [TestCase("dbSourceSimple", "dbTargetSimple")]
+        [TestCase("local_source", "local_target")]
         public void LoadSchemaTest(string dbSource, string dbTarget)
         {
             // =======================================================
@@ -84,13 +83,15 @@ namespace cdb.Common.IntegrationTests
 
             WriteElapsedTime();
 
-            var config = new CloneParameters
+            var config = new CloneParametersExt
             {
                 dbSource = dbSource,
                 dbTarget = dbTarget,
                 skipTables = new List<string>{"*"}  // skip all
             };
-            
+
+            config.AdaptParameters(_config);
+
             _sut.Execute(config);
 
             CheckSchemas(config.dbSourceConnectionString, config.dbTargetConnectionString);
@@ -149,7 +150,7 @@ namespace cdb.Common.IntegrationTests
 
         }
 
-        [TestCase("dbTargetDB")]
+        [TestCase("local_target")]
         public void ExecuteScriptFromString_Abort_by_first_failed_fragment(string dbTarget)
         {
             var strScript = @"
@@ -242,68 +243,6 @@ GO
             PrintList(list);
 
             Assert.AreEqual(expectedCount, list.Count);
-        }
-
-        [TestCase("SQL_Final_001_FixDatabase.sql")]
-        public void TestCheckconstraints(string strFinalScripts)
-        {
-            SetWorkingDirectory();
-
-            var commandLineParameters = new[]
-            {
-                "-dbTarget=dbTargetDB",
-                $"-finalScripts={strFinalScripts}"
-            };
-
-            var toolParameters = CloneParametersExt.GetParameters(commandLineParameters, _cmdParser).AdaptParameters(_config);
-
-            toolParameters.PrintParameters(_logger);
-
-            _sut.SetConfig(toolParameters);
-
-            var targetStringBuilder = new SqlConnectionStringBuilder(toolParameters.dbTargetConnectionString);
-
-            #region Create 'wrong' data in the DB
-
-            var script = @"
-        -- Deactivate Constraint on GlobalConfigurationStructureLang
-        ALTER TABLE [global].[GlobalConfigurationStructureLang] NOCHECK CONSTRAINT FK_GlobalConfigurationStructureLang_Key
-        DELETE FROM [global].[GlobalConfigurationStructureLang] WHERE [KEY] in ('KEY_1', 'KEY_2')
-
-        INSERT INTO [global].[GlobalConfigurationStructureLang] ([Key],[Name],[Description],[Lang],[_CreatedBy],[_CreateDate],[_ModifiedBy],[_ModifyDate])
-             VALUES('KEY_1', 'NAME_KEY_1', 'DESCRIPTION_KEY_1_DE', 'DE', 'INITIAL', getdate(), 'INITIAL', getdate())
-
-        INSERT INTO [global].[GlobalConfigurationStructureLang] ([Key],[Name],[Description],[Lang],[_CreatedBy],[_CreateDate],[_ModifiedBy],[_ModifyDate])
-             VALUES('KEY_2', 'NAME_KEY_2', 'DESCRIPTION_KEY_2_DE', 'DE', 'INITIAL', getdate(), 'INITIAL', getdate())
-
-        -- Activate constraint, but do not check this constraint for already available records
-        ALTER TABLE [global].[GlobalConfigurationStructureLang] CHECK CONSTRAINT FK_GlobalConfigurationStructureLang_Key
-
-        ";
-
-            var resSuccess = _sut.ExecuteScriptFromString(script, targetStringBuilder, true, true);
-            Assert.IsTrue(resSuccess, "Error by ExecuteScriptFromString");
-
-            CheckGlobalConfigurationStructureLang(targetStringBuilder, 2);
-
-            #endregion
-
-            // Execute Script
-            _sut.ExecuteFinalScripts(targetStringBuilder);
-
-
-            // Check Result
-            CheckGlobalConfigurationStructureLang(targetStringBuilder, 0);
-
-        }
-
-
-        private void CheckGlobalConfigurationStructureLang(SqlConnectionStringBuilder targetStringBuilder, int expectedCount)
-        {
-            const string strSelect = "SELECT [KEY]  FROM [global].[GlobalConfigurationStructureLang] WHERE [KEY] in ('KEY_1', 'KEY_2')";
-            var strJson = _sut.ExecuteSelect(strSelect, targetStringBuilder.ConnectionString);
-            var temp = JsonConvert.DeserializeObject<List<KeyValueClass>>(strJson);
-            Assert.AreEqual(expectedCount, temp.Count);
         }
 
         // todo move to base class or create an extension

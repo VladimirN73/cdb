@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -13,13 +12,15 @@ namespace cdb.Common
         bool Execute(CloneParameters config);
     }
 
-    public class CloneProcessor :ICloneProcessor
+    public class CloneProcessor : ICloneProcessor
     {
         public const string SqlClearDatabase = "SQL_ClearDatabase.sql";
 
         private readonly IAppLogger _logger;
-        private readonly string _executionId; // use unique Id to enable parallel execution: the 'restore'-scripts will be not overwritten
-        
+
+        private readonly string
+            _executionId; // use unique Id to enable parallel execution: the 'restore'-scripts will be not overwritten
+
         private CloneParameters _config;
 
         public CloneProcessor(IAppLogger logger)
@@ -63,6 +64,32 @@ namespace cdb.Common
             if (!isSuccess)
             {
                 throw new Exception($@"Error by {nameof(DoLoadSchema)}");
+            }
+
+            //// STEP
+            //DoTransferData(SourceBuilder, TargetBuilder);
+
+            //// STEP
+            if (!ExecuteUpdateScripts(TargetBuilder))
+            {
+                throw new Exception($@"Error by {nameof(ExecuteUpdateScripts)}");
+            }
+
+            //// STEP
+            //if (!RestoreBackupForTablesToRestore(TargetBuilder))
+            //{
+            //    throw new Exception($@"Error by {nameof(RestoreBackupForTablesToRestore)}");
+            //}
+
+            //if (!RestoreBackupForTablesToMerge(TargetBuilder))
+            //{
+            //    throw new Exception($@"Error by {nameof(RestoreBackupForTablesToRestore)}");
+            //}
+
+            //// STEP
+            if (!ExecuteFinalScripts(TargetBuilder))
+            {
+                throw new Exception($@"Error by {nameof(ExecuteFinalScripts)}");
             }
 
             return true;
@@ -133,7 +160,7 @@ namespace cdb.Common
         }
 
         private void Log(string str)
-        { 
+        {
             _logger?.Log(str);
         }
 
@@ -182,10 +209,8 @@ namespace cdb.Common
         {
             try
             {
-                using (var scripter = new DbSchemaScripter(source.DataSource, source.UserID, source.Password, schemaFile))
-                {
-                    scripter.GenerateSchema(source.InitialCatalog);
-                }
+                using var scripter = new DbSchemaScripter(source.DataSource, source.UserID, source.Password, schemaFile);
+                scripter.GenerateSchema(source.InitialCatalog);
             }
             catch (Exception ex)
             {
@@ -216,7 +241,8 @@ namespace cdb.Common
                 {
                     // TODO translate
                     // trace and return
-                    Log("Das Laden der Db-Schema wird übersprungen, da das Schema-File oder die Ziel-Db nicht vorhanden sind");
+                    Log(
+                        "Das Laden der Db-Schema wird übersprungen, da das Schema-File oder die Ziel-Db nicht vorhanden sind");
                 }
                 else
                 {
@@ -239,6 +265,17 @@ namespace cdb.Common
         }
 
         //TODO make it internal (or protected)
+        public bool ExecuteUpdateScripts(SqlConnectionStringBuilder target)
+        {
+            var strMethod = $@"{nameof(ExecuteUpdateScripts)}";
+
+            using (new StackLogger(strMethod))
+            {
+                return ExecuteScriptsByList(target, _config.updateScripts, false, false);
+            }
+        }
+
+        //TODO make it internal (or protected)
         public bool ExecuteFinalScripts(SqlConnectionStringBuilder target)
         {
             var strMethod = $@"{nameof(ExecuteFinalScripts)}";
@@ -249,7 +286,8 @@ namespace cdb.Common
             }
         }
 
-        protected bool ExecuteScriptsByList(SqlConnectionStringBuilder target, List<ScriptInfo> scripts, bool writeLog, bool continueOnError)
+        protected bool ExecuteScriptsByList(SqlConnectionStringBuilder target, List<ScriptInfo> scripts, bool writeLog,
+            bool continueOnError)
         {
             bool ret;
             using (var dbConnection = new SqlConnection(target.ConnectionString))
@@ -264,7 +302,8 @@ namespace cdb.Common
             return ret;
         }
 
-        protected bool ExecuteScriptsByList(SqlConnection dbConnection, List<ScriptInfo> scripts, bool writeLog, bool continueOnError)
+        protected bool ExecuteScriptsByList(SqlConnection dbConnection, List<ScriptInfo> scripts, bool writeLog,
+            bool continueOnError)
         {
             var retSuccess = true;
             foreach (var script in scripts)
@@ -332,10 +371,10 @@ namespace cdb.Common
         }
 
         public bool ExecuteScriptFromString(
-    string scriptString,
-    SqlConnectionStringBuilder target,
-    bool writeLog,
-    bool continueOnError)
+            string scriptString,
+            SqlConnectionStringBuilder target,
+            bool writeLog,
+            bool continueOnError)
         {
             EnsureNonProdDb(target);
 
@@ -424,34 +463,44 @@ namespace cdb.Common
             }
         }
 
-
-
-    }
-
-    internal class StackLogger : IDisposable
-    {
-        private readonly string _strMethod;
-        private readonly bool _writeLog;
-
-        public StackLogger(string strMethod, bool writeLog = true)
+        public bool DoTransferData(
+            SqlConnectionStringBuilder source,
+            SqlConnectionStringBuilder target)
         {
-            _strMethod = strMethod;
-            _writeLog = writeLog;
+            EnsureNonProdDb(target);
 
-            if (_writeLog) AddLog($@"--> {_strMethod}");
+            var strMethod = $@"{nameof(DoTransferData)}";
+
+            using (new StackLogger(strMethod))
+            {
+                var ret = true;
+
+                TraceConfigDatabases();
+
+                if (_config.SkipAllTables)
+                {
+                    HelperX.AddLog($"--- {strMethod} : SkipAllTables returns 'true', so no data-transfer is performed");
+                }
+                else if (string.IsNullOrEmpty(source?.ConnectionString))
+                {
+                    HelperX.AddLog($"--- {strMethod} : dbsource is missing, so no data-transfer is performed");
+                }
+                else
+                {
+                    //DisableAllCheckConstraintsOnTargetDb(target);
+                    //DisableAllTriggersOnTargetDb(target);
+                    //DisableAllIndexesOnTargetDb(target);
+
+                    //BulkCopy(source, target);
+
+                    //EnableAllCheckConstraintsOnTargetDb(target);
+                    //EnableAllTriggersOnTargetDb(target);
+                    //EnableAllIndexesOnTargetDb(target);
+                }
+
+                return ret;
+            }
         }
-
-        public void Dispose()
-        {
-            if (_writeLog) AddLog($@"<-- {_strMethod}");
-        }
-
-        private void AddLog(string log)
-        {
-            Console.Out.WriteLine(log);
-            Trace.TraceInformation(log);
-        }
-
 
     }
 }

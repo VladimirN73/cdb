@@ -23,4 +23,10 @@
         <ProjectReference Include="..\..\cdb.Module.Console\cdb.Module.Console.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="SQL_ClearDatabase.sql">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
