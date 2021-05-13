@@ -280,7 +280,7 @@ GO
 
         private void ClearDatabase(string dbTarget)
         {
-            var strFinalScripts = "SQL_ClearDatabase.sql"; // todo magic-string. use const
+            var strFinalScripts = "./Scripts/SQL_ClearDatabase.sql"; // todo magic-string. use const
 
             var commandLineParameters = new[]
             {

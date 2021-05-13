@@ -1,0 +1,3 @@
+﻿-- Update Script with an error
+
+SELECT X FROM Y
