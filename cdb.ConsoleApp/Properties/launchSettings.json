@@ -2,7 +2,7 @@
   "profiles": {
     "cdb.ConsoleApp": {
       "commandName": "Project",
-      "commandLineArgs": "-helpx -dbSource=local_source -dbTarge=local_target",
+      "commandLineArgs": "-helpx -dbSourcex=local_source -dbTargex=local_target  -dbSource=\"Data Source=localhost;Initial Catalog=cdb_local_1;Persist Security Info=True;User ID=ICLx_Admin;Password=1qay2wsx;MultipleActiveResultSets=False\" -dbTarget=\"Data Source=localhost;Initial Catalog=cdb_local_2;Persist Security Info=True;User ID=ICLx_Admin;Password=1qay2wsx;MultipleActiveResultSets=False\"",
       "environmentVariables": {
         "Key": "Value",
         "DOTNET_Environment": "Development"

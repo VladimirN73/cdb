@@ -8,7 +8,7 @@ namespace cdb.Common.Extensions
     {
         public static string GetConnectionStringByKey(this IConfiguration config, string strKey)
         {
-            if (strKey.IsNullOrEmpty()) return "";
+            if (strKey.IsNullOrEmpty()) return null;
 
             var list = config
                 .GetSection("ConnectionStrings")
@@ -18,7 +18,7 @@ namespace cdb.Common.Extensions
             var item = list
                 .FirstOrDefault(x => string.Equals(x.Key.Trim(), strKey.Trim(), StringComparison.CurrentCultureIgnoreCase));
 
-            var ret = item?.Value ?? string.Empty;
+            var ret = item?.Value;
 
             return ret;
         }
