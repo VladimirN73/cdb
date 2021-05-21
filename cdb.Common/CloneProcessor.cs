@@ -140,7 +140,10 @@ namespace cdb.Common
             if (string.IsNullOrEmpty(connectionString)) return;
 
             // Exclude PROD-DB from the target DBs
-            var isProd = !connectionString.ToLower().Contains("localhost"); // TODO magic string
+            var str = connectionString.ToLower().Trim();
+            var isProd = !str.Contains("localhost") && // TODO magic string
+                         !str.Contains("sql2019")      // TODO magic string
+                ; 
 
             if (isProd)
             {
