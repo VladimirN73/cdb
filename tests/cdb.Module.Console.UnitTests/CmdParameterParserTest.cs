@@ -7,11 +7,11 @@ namespace cdb.Module.Console.UnitTests
     {
         private CmdParameterParser _sut;
 
-
-
+        //TODO
+        [Test]
         public void TryGetParameterValue()
         {
-            parser.TryGetParameterValue(parameterArray, param_dbSource, out ret.dbSource);
+            //_sut.TryGetParameterValue(parameterArray, param_dbSource, out ret.dbSource);
         }
     }
 }
