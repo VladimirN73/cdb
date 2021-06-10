@@ -6,7 +6,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Microsoft.SqlServer.Management.Dmf;
 using Microsoft.SqlServer.Management.Smo;
 
 namespace cdb.Common
