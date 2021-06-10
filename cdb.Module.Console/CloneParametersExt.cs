@@ -129,8 +129,6 @@ namespace cdb.Module.Console
             return ret;
         }
 
-
-        // TODO move to protected as long the corresponding tests are changed
         public static List<string> GetFilesByPatternString(string strPatterns)
         {
             var patterns = HelperConsole.GetListFromString(strPatterns);

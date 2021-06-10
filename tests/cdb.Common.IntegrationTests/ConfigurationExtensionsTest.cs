@@ -47,14 +47,12 @@ namespace cdb.Common.IntegrationTests
 
             if (strExpected == null)
             {
-                Assert.IsEmpty(ret);
+                Assert.IsNull(ret);
             }
             else
             {
                 Assert.IsTrue(ret.Contains(strExpected));
             }
-
-            
         }
     }
 }

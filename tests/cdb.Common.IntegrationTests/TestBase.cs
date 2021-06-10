@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace cdb.Common.IntegrationTests
 {
@@ -39,6 +36,14 @@ namespace cdb.Common.IntegrationTests
         protected void WriteElapsedTime()
         {
             WriteInfo($@"Elapsed Time : {_stopWatch.ElapsedMilliseconds / 1000} second(s)");
+        }
+
+        protected void PrintList(List<string> list)
+        {
+            foreach (var item in list)
+            {
+                WriteInfo(item);
+            }
         }
     }
 }

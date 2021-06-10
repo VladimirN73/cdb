@@ -5,7 +5,7 @@ Help info see in .\cdb.ConsoleApp\_help.txt
 github: https://github.com/VladimirN73/cdb
 
 -------------------------------------------------------
-Open Points (Todos) see also issues in github
+Open Points (see also issues in github)
 -------------------------------------------------------
 *. iTest - ClearDatabase - ensure Exception if Clear.sql is not found
 *. Feature - Transfer Data for some tables. Do not re-create the target DB. Example: Transfer only SWIP Tables from Test to Int.

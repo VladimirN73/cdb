@@ -248,16 +248,7 @@ GO
 
             Assert.AreEqual(expectedCount, list.Count);
         }
-
-        // todo move to base class or create an extension
-        private void PrintList(List<string> list)
-        {
-            foreach (var item in list)
-            {
-                WriteInfo(item);
-            }
-        }
-
+        
         private void CompareDbSchemas(string sourceConnectionString, string targetConnectionString)
         {
             // Select available tables
@@ -306,7 +297,7 @@ GO
 
         private void ClearDatabase(string dbTarget)
         {
-            var strFinalScripts = "./Scripts/SQL_ClearDatabase.sql"; // todo magic-string. use const
+            var strFinalScripts = CloneProcessor.SqlClearDatabase;
 
             var commandLineParameters = new[]
             {
@@ -316,8 +307,6 @@ GO
 
             var toolParameters = CloneParametersExt.GetParameters(commandLineParameters, _cmdParser);
             toolParameters = toolParameters.AdaptParameters(_config);
-
-            //todo trace parameters
 
             _sut.Execute(toolParameters);
         }
