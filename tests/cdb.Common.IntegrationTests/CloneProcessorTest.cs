@@ -50,7 +50,7 @@ namespace cdb.Common.IntegrationTests
 
         #endregion
 
-        [TestCase("local_target")]
+        [TestCase("dbTargetDB")]
         public void ClearTargetDatabase(string dbTarget)
         {
             var config = new CloneParametersExt
@@ -75,7 +75,7 @@ namespace cdb.Common.IntegrationTests
             Assert.AreEqual(strExpected, str);
         }
 
-        [TestCase("local_source", "local_target")]
+        [TestCase("dbSourceDB", "dbTargetDB")]
         public void LoadSchemaTest(string dbSource, string dbTarget)
         {
             // =======================================================
@@ -154,7 +154,7 @@ namespace cdb.Common.IntegrationTests
 
         }
 
-        [TestCase("local_target")]
+        [TestCase("dbTargetDB")]
         public void ExecuteScriptFromString_Abort_by_first_failed_fragment(string dbTarget)
         {
             var strScript = @"
