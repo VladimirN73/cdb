@@ -139,16 +139,21 @@ namespace cdb.Common
         {
             if (string.IsNullOrEmpty(connectionString)) return;
 
+            // TODO magic strings
             // Exclude PROD-DB from the target DBs
             var str = connectionString.ToLower().Trim();
-            var isProd = !str.Contains("localhost") && // TODO magic string
-                         !str.Contains("sql2019")      // TODO magic string
-                ; 
+            var isNonProd =
+                str.Contains("localhost") ||
+                str.Contains("sql2019") ||
+                str.Contains("cdb_")   
+                ;
 
-            if (isProd)
+            if (isNonProd)
             {
-                throw new Exception("Prod-DB cannot used as a target DB ");
+                return;
             }
+
+            throw new Exception("Prod-DB cannot used as a target DB ");
         }
 
         public void TraceConfigDatabases()

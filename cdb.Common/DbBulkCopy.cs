@@ -179,10 +179,6 @@ namespace cdb.Common
                     using (var bulkCopy = GetSqlBulkCopy(destConn)) // destTran
                     using (var sourceDr = cmd.ExecuteReader(CommandBehavior.Default))
                     {
-                        // Fragment to test ICLX-8716
-                        // Clone only 'GlobalConfigurationStructure' & 'GlobalConfigurationStructureLang'
-                        // if (!t.Name.Contains("GlobalConfigurationStructure")) continue;
-
                         // Set the destination table name
                         bulkCopy.DestinationTableName = $@"[{table.Schema}].[{table.Name}]";
 

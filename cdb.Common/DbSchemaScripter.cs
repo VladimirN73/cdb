@@ -91,7 +91,7 @@ namespace cdb.Common
 
         private void GenerateRoles(Database db)
         {
-            HelperX.AddLog("Verarbeitung der Userrollen welche mit 'ICLX_R_' beginnen...");
+            HelperX.AddLog("Process user roles ");
 
             var scriptOptions = new ScriptingOptions
             {
@@ -106,13 +106,13 @@ namespace cdb.Common
             };
 
             var roles = db.Roles.Cast<DatabaseRole>()
-                .Where(r => !r.IsFixedRole && r.Name.ToUpper().StartsWith("ICLX_R_"))
+                .Where(r => !r.IsFixedRole && r.Name.ToUpper().StartsWith("CUSTOM_ROLER_"))
                 .ToList();
 
             foreach (var role in roles)
             {
                 HelperX.AddLog($"Ermittle Rolle '{role.Name}'");
-                // ICLX-8372: Ändere jegliche Rollen auf Owner dbo, da ggf. der ursprüngliche Owner nicht in Zieldatenbank vorhanden ist.
+                // Chege Roles to dbo, due to the target db may do not contain other owners
                 role.Owner = "dbo";
                 role.Script(scriptOptions);
             }
@@ -534,7 +534,7 @@ namespace cdb.Common
         {
             var ret =
                 pInfo.GranteeType == PrincipalType.DatabaseRole &&
-                pInfo.Grantee.ToUpper().StartsWith("ICLX_R_") &&
+                pInfo.Grantee.ToUpper().StartsWith("CUSTOM_ROLE_") &&
                 pInfo.Grantor.ToUpper() == "DBO";
 
             return ret;
