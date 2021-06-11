@@ -290,7 +290,7 @@ namespace cdb.Common
         //TODO make it internal (or protected)
         public bool ExecuteFinalScripts(SqlConnectionStringBuilder target)
         {
-            var strFunc = $@"{nameof(ExecuteFinalScripts)}";
+            var strFunc = $@"{_strClass}.{nameof(ExecuteFinalScripts)}";
 
             using (new StackLogger(strFunc))
             {
@@ -653,14 +653,20 @@ namespace cdb.Common
 
         private static void EnableAllCheckConstraintsOnTargetDb(SqlConnectionStringBuilder target)
         {
-            HelperX.AddLog("Enabling all check constraints on target database.");
-            ModifyChecksOnTargetDb("ALTER TABLE [{0}].[{1}] CHECK CONSTRAINT {2}", target);
+            var strFunc = $"{nameof(EnableAllCheckConstraintsOnTargetDb)}";
+            using( new StackLogger(strFunc))
+            {
+                ModifyChecksOnTargetDb("ALTER TABLE [{0}].[{1}] CHECK CONSTRAINT {2}", target);
+            }
         }
 
         private static void DisableAllCheckConstraintsOnTargetDb(SqlConnectionStringBuilder target)
         {
-            HelperX.AddLog("Disabling all check constraints on target database.");
-            ModifyChecksOnTargetDb("ALTER TABLE [{0}].[{1}] NOCHECK CONSTRAINT {2}", target);
+            var strFunc = $"{nameof(DisableAllCheckConstraintsOnTargetDb)}";
+            using (new StackLogger(strFunc))
+            {
+                ModifyChecksOnTargetDb("ALTER TABLE [{0}].[{1}] NOCHECK CONSTRAINT {2}", target);
+            }
         }
 
         private static void ModifyTriggersOnTargetDb(string strFormat, SqlConnectionStringBuilder tcsb)

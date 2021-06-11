@@ -59,6 +59,7 @@ namespace cdb.Common.IntegrationTests
             };
 
             config.AdaptParameters(_config);
+            config.PrintParameters(_logger);
 
             _sut.SetConfig(config);
 
@@ -307,6 +308,7 @@ GO
 
             var toolParameters = CloneParametersExt.GetParameters(commandLineParameters, _cmdParser);
             toolParameters = toolParameters.AdaptParameters(_config);
+            toolParameters.PrintParameters(_logger);
 
             _sut.Execute(toolParameters);
         }
