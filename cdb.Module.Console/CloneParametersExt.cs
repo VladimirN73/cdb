@@ -139,12 +139,19 @@ namespace cdb.Module.Console
         {
             var ret = new List<string>();
 
-            foreach (var pattern in patterns)
+            const string fileNameSeparator = "/";
+
+            foreach (var item in patterns)
             {
-                AddLog($"process file-pattern '{pattern}'");
+                AddLog($"process file-pattern '{item}'");
+
+                var pattern = item
+                    .Replace(@"\", fileNameSeparator)
+                    .Replace(@"/", fileNameSeparator);
+
                 if (pattern.Contains("*"))
                 {
-                    var iLastSlash = pattern.LastIndexOf(@"\", StringComparison.Ordinal);
+                    var iLastSlash = pattern.LastIndexOf(fileNameSeparator, StringComparison.Ordinal);
                     var folder = pattern.Substring(0, iLastSlash + 1);
                     var filePattern = pattern.Substring(iLastSlash + 1, pattern.Length - iLastSlash - 1);
 

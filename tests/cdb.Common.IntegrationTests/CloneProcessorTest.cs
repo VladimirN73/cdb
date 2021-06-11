@@ -237,10 +237,10 @@ GO
 
         }
 
-        [TestCase(@".\Scripts\SQL_Final_0*.sql", 2)]
-        [TestCase(@".\Scripts\SQL_Final_*.sql", 3)]
-        [TestCase(@".\Scripts\SQL_Final_x*.sql,.\Scripts\SQL_Final_0*.sql", 3)]
-        [TestCase(@".\ScriptsWRONG\SQL_Final_x*.sql", 0)]
+        [TestCase(@"./Scripts/SQL_Final_0*.sql", 2)]
+        [TestCase(@"./Scripts/SQL_Final_*.sql", 3)]
+        [TestCase(@"./Scripts/SQL_Final_x*.sql,./Scripts/SQL_Final_0*.sql", 3)]
+        [TestCase(@"./ScriptsWRONG/SQL_Final_x*.sql", 0)]
         public void GetFilesByPatternsTest(string strPattern, int expectedCount)
         {
             var list = CloneParametersExt.GetFilesByPatternString(strPattern);

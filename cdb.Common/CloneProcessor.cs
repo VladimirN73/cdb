@@ -23,8 +23,7 @@ namespace cdb.Common
 
         private readonly IAppLogger _logger;
 
-        private readonly string
-            _executionId; // use unique Id to enable parallel execution: the 'restore'-scripts will be not overwritten
+        private readonly string _executionId; // use unique Id to enable parallel execution
 
         private CloneParameters _config;
 
@@ -197,7 +196,7 @@ namespace cdb.Common
 
         public void DoCreateSchema(string schemaFile, SqlConnectionStringBuilder source)
         {
-            var strFunc = $@"{nameof(DoCreateSchema)}";
+            var strFunc = $@"{_strClass}.{nameof(DoCreateSchema)}";
 
             using (new StackLogger(strFunc))
             {
@@ -485,7 +484,7 @@ namespace cdb.Common
         {
             EnsureNonProdDb(target);
 
-            var strFunc = $@"{nameof(DoTransferData)}";
+            var strFunc = $@"{_strClass}.{nameof(DoTransferData)}";
 
             using var stackLogger = new StackLogger(strFunc);
 
@@ -710,8 +709,7 @@ namespace cdb.Common
             HelperX.AddLog("Starting data-transfer");
             copier.Copy(null, null);
         }
-
-
+        
         private static Server TargerServer(SqlConnectionStringBuilder consb)
         {
             var server = new Server(consb.DataSource);
@@ -733,7 +731,5 @@ namespace cdb.Common
             return db;
 
         }
-
-
     }
 }
