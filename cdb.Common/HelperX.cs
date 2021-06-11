@@ -11,6 +11,7 @@ namespace cdb.Common
     public static class HelperX
     {
         public const string SqlSeparator = "GO";
+        public const string EOL = "\n";
 
         public static void AddLog(string log)
         {
@@ -99,7 +100,7 @@ namespace cdb.Common
             if (sqlScript == null) sqlScript = "";
 
             // first normalize GO: replace '  GO  ' by 'GO'
-            var lines = sqlScript.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            var lines = sqlScript.Split(new[] { EOL }, StringSplitOptions.None);
             var sb = new StringBuilder();
             foreach (var line in lines)
             {
@@ -107,9 +108,9 @@ namespace cdb.Common
                 sb.AppendLine(str == SqlSeparator ? SqlSeparator : line);
             }
 
-            var scriptNormalized = sb.ToString();
+            var scriptNormalized = sb.ToString().NormaliseEndOfLine();
 
-            return scriptNormalized.Split(new[] { SqlSeparator + "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            return scriptNormalized.Split(new[] { SqlSeparator + EOL }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         public static string NormaliseEndOfLine(this string value)
@@ -118,7 +119,7 @@ namespace cdb.Common
                 .Replace("\r\n", "\n")
                 .Replace("\n\r", "\n")
                 .Replace("\r", "\n")
-                .Replace("\n", "\r\n");
+                .Replace("\n", EOL);
             return ret;
         }
 

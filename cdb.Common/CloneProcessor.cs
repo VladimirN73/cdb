@@ -17,6 +17,8 @@ namespace cdb.Common
 
     public class CloneProcessor : ICloneProcessor
     {
+        private readonly string _strClass = $"{nameof(CloneProcessor)}";
+
         public const string SqlClearDatabase = "./Scripts/SQL_ClearDatabase.sql";
 
         private readonly IAppLogger _logger;
@@ -204,7 +206,7 @@ namespace cdb.Common
 
                 if (source == null)
                 {
-                    Log("Das Erstellen der Db-Schema wird übersprungen, da die Source-Db nicht vorhanden ist");
+                    Log("The step 'create Db schema' is skipped, due to the target-db is not presented");
                     return;
                 }
 
@@ -231,7 +233,7 @@ namespace cdb.Common
         {
             EnsureNonProdDb(target);
 
-            var strFunc = $@"{nameof(DoLoadSchema)}";
+            var strFunc = $@"{_strClass}.{nameof(DoLoadSchema)}";
 
             using var stacklogger = new StackLogger(strFunc);
             Log($@"target    :{target?.InitialCatalog}");
@@ -262,6 +264,11 @@ namespace cdb.Common
         protected void ClearTargetDatabase(SqlConnectionStringBuilder target)
         {
             EnsureNonProdDb(target);
+
+            var strFunc = $@"{_strClass}.{nameof(ClearTargetDatabase)}";
+
+            using var stacklogger = new StackLogger(strFunc);
+
             var ret = ExecuteScriptFromFile(SqlClearDatabase, target, false);
             if (!ret)
             {
@@ -272,7 +279,7 @@ namespace cdb.Common
         //TODO make it internal (or protected)
         public bool ExecuteUpdateScripts(SqlConnectionStringBuilder target)
         {
-            var strFunc = $@"{nameof(ExecuteUpdateScripts)}";
+            var strFunc = $@"{_strClass}.{nameof(ExecuteUpdateScripts)}";
 
             using (new StackLogger(strFunc))
             {
@@ -334,6 +341,10 @@ namespace cdb.Common
         {
             EnsureNonProdDb(target);
 
+            var strFunc = $@"{_strClass}.{nameof(ExecuteScriptFromFile)}({fileName},target, {continueOnError})";
+
+            using var stacklogger = new StackLogger(strFunc);
+
             if (!continueOnError && !File.Exists(fileName))
             {
                 throw new Exception($"File {fileName} not found");
@@ -363,7 +374,7 @@ namespace cdb.Common
 
         private string GetScriptFromFile(string fileName)
         {
-            Log($"Script '{fileName}' wird eingelesen");
+            Log($"Script '{fileName}' - try to load");
             if (!File.Exists(fileName))
             {
                 Log($"WARNING: File '{fileName}' not found");
@@ -405,7 +416,7 @@ namespace cdb.Common
         {
             EnsureNonProdDb(dbConnection.ConnectionString);
 
-            var strFunc = $@"{nameof(ExecuteScriptFromString)}";
+            var strFunc = $@"{_strClass}.{nameof(ExecuteScriptFromString)}";
             if (writeLog) Log($@"--> {strFunc}");
 
             var retSuccess = true; // no error yet
