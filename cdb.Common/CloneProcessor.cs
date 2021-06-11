@@ -17,7 +17,7 @@ namespace cdb.Common
 
     public class CloneProcessor : ICloneProcessor
     {
-        public const string SqlClearDatabase = "./scripts/SQL_ClearDatabase.sql";
+        public const string SqlClearDatabase = "./Scripts/SQL_ClearDatabase.sql";
 
         private readonly IAppLogger _logger;
 
