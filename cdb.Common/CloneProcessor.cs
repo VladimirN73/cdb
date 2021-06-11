@@ -701,7 +701,7 @@ namespace cdb.Common
                 scsb.DataSource, scsb.InitialCatalog, scsb.UserID, scsb.Password, "", //scsb.NetworkLibrary,
                 tcsb.DataSource, tcsb.InitialCatalog, tcsb.UserID, tcsb.Password, ""  //tcsb.NetworkLibrar
                 );
-            HelperX.AddLog("Daten werden uebertragen");
+            HelperX.AddLog("Starting data-transfer");
             copier.Copy(null, null);
         }
 

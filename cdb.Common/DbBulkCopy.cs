@@ -133,11 +133,11 @@ namespace cdb.Common
                 if (tablesToSkip.Any(x => x.IsEqualToPattern(t.Schema, t.Name)) &&
                     tablesPartialTransfer.All(x => !x.TableName.IsEqualToPattern(t.Schema, t.Name)))
                 {
-                    HelperX.AddLog($@"-- Ueberspringe Tabelle ({tblCount}) {t.Name}");
+                    HelperX.AddLog($@"-- skip table ({tblCount}) {t.Name}");
                     continue;
                 }
 
-                var strLog = $@"Uebertrage Tabelle ({tblCount}) {t.Schema}.{t.Name}";
+                var strLog = $@"transfer table ({tblCount}) {t.Schema}.{t.Name}";
                 var strWhere = "";
 
                 var partialTransfer = tablesPartialTransfer
@@ -146,7 +146,7 @@ namespace cdb.Common
                 if (partialTransfer != null)
                 {
                     strWhere = partialTransfer.WhereCondition;
-                    strLog += $" Bedingung '{strWhere}'";
+                    strLog += $" Condition '{strWhere}'";
                 }
 
                 HelperX.AddLog(strLog);
@@ -201,8 +201,8 @@ namespace cdb.Common
             }
             catch (Exception ex)
             {
-                HelperX.AddLog($"Fehler: Die Tabelle [{table.Schema}].[{table.Name}] konnte nicht uebertragen werden.");
-                HelperX.AddLog("Stacktrace: " + ex.ToString());
+                HelperX.AddLog($"Error: Cannot transfer the table [{table.Schema}].[{table.Name}].");
+                HelperX.AddLog("Stacktrace: " + ex);
                 throw;
             }
         }
@@ -218,9 +218,9 @@ namespace cdb.Common
 
                 conn.Close();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                HelperX.AddLog("Error while closing connection: " + e.ToString());
+                HelperX.AddLog("Error while closing connection: " + ex);
             }
         }
 
@@ -252,12 +252,11 @@ namespace cdb.Common
             {
                 try
                 {
-                    string pattern = @"\d+";
-                    Match match = Regex.Match(ex.Message, pattern);
+                    var pattern = @"\d+";
+                    var match = Regex.Match(ex.Message, pattern);
                     var index = Convert.ToInt32(match.Value) - 1;
 
-                    FieldInfo fi = typeof(SqlBulkCopy).GetField("_sortedColumnMappings",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    var fi = typeof(SqlBulkCopy).GetField("_sortedColumnMappings", BindingFlags.NonPublic | BindingFlags.Instance);
                     var sortedColumns = fi.GetValue(bulkCopy);
                     var items = (object[])sortedColumns.GetType()
                         .GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sortedColumns);
