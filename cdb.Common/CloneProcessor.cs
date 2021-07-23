@@ -716,7 +716,7 @@ namespace cdb.Common
 
             if (!string.IsNullOrEmpty(consb.UserID))
             {
-                server.ConnectionContext.LoginSecure = true;
+                server.ConnectionContext.LoginSecure = false;
                 server.ConnectionContext.Login = consb.UserID;
                 server.ConnectionContext.Password = consb.Password;
             }
