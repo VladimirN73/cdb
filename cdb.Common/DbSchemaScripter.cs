@@ -66,7 +66,7 @@ namespace cdb.Common
 
         public void GenerateBackup(string database, List<string> tableNames)
         {
-            HelperX.AddLog($"Backup '{database}' erstellen");
+            HelperX.AddLog($"Generate the backup of '{database}'");
 
             OpenConnectionContext(database);
 
@@ -111,8 +111,8 @@ namespace cdb.Common
 
             foreach (var role in roles)
             {
-                HelperX.AddLog($"Ermittle Rolle '{role.Name}'");
-                // Chege Roles to dbo, due to the target db may do not contain other owners
+                HelperX.AddLog($"get Rolle '{role.Name}'");
+                // Change Roles to dbo, due to the target db may do not contain other owners
                 role.Owner = "dbo";
                 role.Script(scriptOptions);
             }
@@ -120,7 +120,7 @@ namespace cdb.Common
 
         private void GenerateDatabaseSchemas(Database database)
         {
-            HelperX.AddLog("Verarbeitung Database Schemas...");
+            HelperX.AddLog("Process Database Schemas...");
             var scriptOptions = new ScriptingOptions
             {
                 FileName = _fileName,
@@ -140,14 +140,14 @@ namespace cdb.Common
             {
                 if (schema.Name == "dbo") continue;
 
-                HelperX.AddLog($"Ermittle CREATE Schema '{schema.Name}'");
+                HelperX.AddLog($"get CREATE Schema '{schema.Name}'");
                 schema.Script(scriptOptions);
             }
         }
 
         private void GenerateTables(Database database)
         {
-            HelperX.AddLog("Verarbeitung Tabellen...");
+            HelperX.AddLog("Process Tables...");
             /* With ScriptingOptions you can specify different scripting
              * options, for example to include IF NOT EXISTS, DROP
              * statements, output location etc*/
@@ -203,14 +203,14 @@ namespace cdb.Common
 
         private void GenerateTableInternal(ScriptingOptions scriptOptions, Table myTable)
         {
-            HelperX.AddLog($"Ermittle CREATE Table '{myTable.Name}'");
+            HelperX.AddLog($"generate CREATE Table '{myTable.Name}'");
             // dump the table
             myTable.Script(scriptOptions);
 
             // dump the indexes 
             foreach (var myIndex in OrderIndexes(myTable.Indexes))
             {
-                HelperX.AddLog($"Ermittle CREATE INDEX '{myIndex.Name}'");
+                HelperX.AddLog($"generate CREATE INDEX '{myIndex.Name}'");
                 myIndex.Script(scriptOptions);
 
                 //if (myIndex.IsXmlIndex || myIndex.IndexKeyType.Equals(IndexKeyType.DriPrimaryKey)) continue;
@@ -272,7 +272,7 @@ namespace cdb.Common
             if (tableNameList.Any())
             {
                 HelperX.AddLog(@" -------------------------");
-                HelperX.AddLog(@"WARNUNG. Folgende Backup-Tabellen wurden in der Target-DB nicht gefunden");
+                HelperX.AddLog(@"WARNING. The following backup-tables are not found in the target database");
                 foreach (var str in tableNameList.OrderBy(x => x).ToList())
                 {
                     HelperX.AddLog($" --- {str}");
@@ -283,7 +283,7 @@ namespace cdb.Common
 
         private void GenerateTableVariables(Database db)
         {
-            HelperX.AddLog("Schema der Table-Types functions wird erzeugt");
+            HelperX.AddLog("generate schemas of Table-Types functions");
             var scriptOptions = new ScriptingOptions
             {
                 FileName = _fileName,
@@ -298,14 +298,14 @@ namespace cdb.Common
 
             foreach (TableViewTableTypeBase schema in db.UserDefinedTableTypes)
             {
-                HelperX.AddLog($"Ermittle Table-Type '{schema.Name}'");
+                HelperX.AddLog($"get Table-Type '{schema.Name}'");
                 schema.Script(scriptOptions);
             }
         }
 
         private void GenerateStoreProcedures(Database db)
         {
-            HelperX.AddLog("Schema der Stored Procedures wird erzeugt");
+            HelperX.AddLog("generate schemas of Stored Procedures");
             var scriptOptions = new ScriptingOptions
             {
                 FileName = _fileName,
@@ -320,14 +320,14 @@ namespace cdb.Common
 
             foreach (var sp in db.StoredProcedures.Cast<StoredProcedure>().Where(sp => !sp.IsSystemObject))
             {
-                HelperX.AddLog($"Ermittle CREATE Stored Procedure '{sp.Name}'");
+                HelperX.AddLog($"get CREATE Stored Procedure '{sp.Name}'");
                 sp.Script(scriptOptions);
             }
         }
 
         private void GenerateUserDefinedFunctions(Database db)
         {
-            HelperX.AddLog("Schema der User defined functions wird erzeugt");
+            HelperX.AddLog("generate schemas of user-defined functions");
             var scriptOptions = new ScriptingOptions
             {
                 FileName = _fileName,
@@ -350,7 +350,7 @@ namespace cdb.Common
                 if (sp.IsSystemObject)
                     continue;
 
-                HelperX.AddLog($"Ermittle CREATE User defined Function '{sp.Name}'");
+                HelperX.AddLog($"get CREATE User defined Function '{sp.Name}'");
                 sp.Script(scriptOptions);
 
                 SetPermissions(sp);
@@ -359,7 +359,7 @@ namespace cdb.Common
 
         private void GenerateTableRestrictions(Database db)
         {
-            HelperX.AddLog("Verarbeitung Constraints ...");
+            HelperX.AddLog("Process constraints ...");
             /* With ScriptingOptions you can specify different scripting
              * options, for example to include IF NOT EXISTS, DROP
              * statements, output location etc*/
@@ -382,11 +382,11 @@ namespace cdb.Common
                 DriForeignKeys = true
             };
 
-            //Indizes (inkl. Clustered, NonClustered, PrimaryKeys & UniqueKeys) werden in Generate tables schon gesetzt und dürfen nicht erneut erzeugt werden
+            //Indexes (including  Clustered, NonClustered, PrimaryKeys & UniqueKeys) are created in function 'Generate tables'
 
             foreach (Table myTable in db.Tables)
             {
-                HelperX.AddLog($"Ermittle CREATE DRI-Objekte Script '{myTable.Name}'");
+                HelperX.AddLog($"get CREATE DRI-Objects Script '{myTable.Name}'");
                 myTable.Script(scriptOptions);
             }
         }
@@ -431,11 +431,11 @@ namespace cdb.Common
             {
                 view.Script(scriptOptions);
 
-                HelperX.AddLog($"Ermittle CREATE View '{view.Name}'");
+                HelperX.AddLog($"get CREATE View '{view.Name}'");
 
                 foreach (var myIndex in OrderIndexes(view.Indexes))
                 {
-                    HelperX.AddLog($"Ermittle CREATE Index '{myIndex.Name}'");
+                    HelperX.AddLog($"get CREATE Index '{myIndex.Name}'");
                     myIndex.Script(scriptOptions);
                 }
 
@@ -490,7 +490,7 @@ namespace cdb.Common
                 var connContext = _myServer.ConnectionContext;
                 connContext.DatabaseName = database;
                 connContext.Connect();
-                HelperX.AddLog($"Verbindung zur Datenbank '{database}' wird hergestellt");
+                HelperX.AddLog($"connection to the database '{database}' is open");
             }
         }
 
@@ -499,7 +499,7 @@ namespace cdb.Common
             if (_myServer.ConnectionContext.IsOpen)
             {
                 _myServer.ConnectionContext.Disconnect();
-                HelperX.AddLog($"Verbindung zur Datenbank '{database}' wird geschlossen");
+                HelperX.AddLog($"connection to the database '{database}' is closed");
             }
         }
 
