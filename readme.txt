@@ -25,6 +25,9 @@ Open Points (see also issues in github)
 ######				History 				###########
 ####################################################### 
 -------------------------------------------------------
+23.07.21
+enable windows credentials and configurable IsolationLevel
+
 19.05.21
 merged to main-branch
 

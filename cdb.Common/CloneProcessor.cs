@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using cdb.Common.Extensions;
 using Microsoft.SqlServer.Management.Smo;
 
 namespace cdb.Common
@@ -702,20 +703,23 @@ namespace cdb.Common
         {
             EnsureNonProdDb(tcsb);
 
-            using var copier = new DbBulkCopy(
-                scsb.DataSource, scsb.InitialCatalog, scsb.UserID, scsb.Password, "", //scsb.NetworkLibrary,
-                tcsb.DataSource, tcsb.InitialCatalog, tcsb.UserID, tcsb.Password, ""  //tcsb.NetworkLibrar
-                );
+            using var copier = new DbBulkCopy(scsb, tcsb, Config.IsolationLevel.ToEnum(IsolationLevel.Snapshot));
             HelperX.AddLog("Starting data-transfer");
             copier.Copy(null, null);
         }
-        
+
+        //TODO  similar code (copy-paste) as in DbSchemaScripter.ctor
         private static Server TargerServer(SqlConnectionStringBuilder consb)
         {
             var server = new Server(consb.DataSource);
-            server.ConnectionContext.LoginSecure = false;
-            server.ConnectionContext.Login = consb.UserID;
-            server.ConnectionContext.Password = consb.Password;
+            server.ConnectionContext.LoginSecure = true;
+
+            if (!string.IsNullOrEmpty(consb.UserID))
+            {
+                server.ConnectionContext.LoginSecure = false;
+                server.ConnectionContext.Login = consb.UserID;
+                server.ConnectionContext.Password = consb.Password;
+            }
 
             if (!server.ConnectionContext.IsOpen)
                 server.ConnectionContext.Connect();

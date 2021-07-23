@@ -23,5 +23,26 @@ namespace cdb.Common.Extensions
             return ret;
         }
 
+        public static T ToEnum<T>(this string value, T defaultValue) //where T : struct
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return defaultValue;
+            }
+
+            var valueX = value.Replace(" ", ""); // remove all empty spaces
+
+            Enum.TryParse(typeof(T), valueX, true, out object retTemp);
+            
+            var ret = defaultValue;
+
+            if (retTemp != null)
+            {
+                ret = (T)retTemp;
+            }
+
+            return ret;
+        }
+
     }
 }

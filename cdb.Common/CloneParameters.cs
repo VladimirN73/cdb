@@ -13,6 +13,8 @@ namespace cdb.Common
         public string dbSourceConnectionString;
         public string dbTargetConnectionString;
 
+        public string IsolationLevel = System.Data.IsolationLevel.Snapshot.ToString();
+
         public List<string> skipTables = new List<string>();
         public List<string> restoreTables = new List<string>();
         public List<ScriptInfo> updateScripts = new List<ScriptInfo>();
