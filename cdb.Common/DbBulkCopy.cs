@@ -12,50 +12,44 @@ namespace cdb.Common
 {
     public class DbBulkCopy : IDisposable
     {
-        private readonly string _sourceServer;
+        private readonly SqlConnectionStringBuilder _scsb;
+        private readonly SqlConnectionStringBuilder _tcsb;
+        private readonly IsolationLevel _isolationLevel;
         private readonly string _sourceDb;
-        private readonly string _sourceUser;
-        private readonly string _sourcePassword;
-        private readonly string _sourceNetworkLibrary;
-
-        private readonly string _destServer;
-        private readonly string _destDb;
-        private readonly string _destUser;
-        private readonly string _destPassword;
-        private readonly string _destNetworkLibrary;
-
-        private Server _myServer;
+        
+        private Server _mySourceDbServer;
 
         public DbBulkCopy(
-            string sourceServer, string sourceDb, string sourceUser, string sourcePassword, string sourceNetworkLibrary,
-            string destServer,   string destDb,   string destUser,   string destPassword,   string destNetworkLibrary)
+            SqlConnectionStringBuilder scsb,
+            SqlConnectionStringBuilder tcsb, 
+            IsolationLevel isolationLevel) 
         {
-            _sourceServer = sourceServer;
-            _sourceDb = sourceDb;
-            _sourceUser = sourceUser;
-            _sourcePassword = sourcePassword;
-            _sourceNetworkLibrary = sourceNetworkLibrary;
-            _destServer = destServer;
-            _destDb = destDb;
-            _destUser = destUser;
-            _destPassword = destPassword;
-            _destNetworkLibrary = destNetworkLibrary;
+            _scsb = scsb;
+            _tcsb = tcsb;
+            _isolationLevel = isolationLevel;
 
-            _myServer = new Server(sourceServer);
+            _sourceDb = scsb.InitialCatalog;
 
-            //Using windows authentication
-            _myServer.ConnectionContext.LoginSecure = false;
-            _myServer.ConnectionContext.Login = sourceUser;
-            _myServer.ConnectionContext.Password = sourcePassword;
+            _mySourceDbServer = new Server(scsb.DataSource);
+
+            //Using windows authentication  //TODO  similar code (copy-paste) as in DbSchemaScripter.ctor
+            _mySourceDbServer.ConnectionContext.LoginSecure = true;
+
+            if (!string.IsNullOrEmpty(scsb.UserID))
+            {
+                _mySourceDbServer.ConnectionContext.LoginSecure = false;
+                _mySourceDbServer.ConnectionContext.Login = scsb.UserID;
+                _mySourceDbServer.ConnectionContext.Password = scsb.Password;
+            }
         }
 
         #region IDisposable Member
 
         public void Dispose()
         {
-            if (_myServer.ConnectionContext.IsOpen)
-                _myServer.ConnectionContext.Disconnect();
-            _myServer = null;
+            if (_mySourceDbServer.ConnectionContext.IsOpen)
+                _mySourceDbServer.ConnectionContext.Disconnect();
+            _mySourceDbServer = null;
         }
 
         #endregion IDisposable Member
@@ -81,23 +75,12 @@ namespace cdb.Common
             return result;
         }
 
-        // ReSharper disable once UnusedParameter.Local
-        private static string GetConnectionString(string server, string db, string user, string password, string networkLibrary)
-        {
-            var consb =
-                new SqlConnectionStringBuilder(
-                    "Data Source=;Network Library=;Initial Catalog=;Persist Security Info=True;User ID=;Password=;MultipleActiveResultSets=False")
-                { DataSource = server, InitialCatalog = db, UserID = user, Password = password };
-
-            return consb.ConnectionString;
-        }
-
         public void Copy(
             IReadOnlyCollection<string> tablesToSkip,
             IReadOnlyCollection<PartialTableTranfer> tablesPartialTransfer)
         {
-            using DbConnection sourceConn = new SqlConnection(GetConnectionString(_sourceServer, _sourceDb, _sourceUser, _sourcePassword, _sourceNetworkLibrary));
-            using DbConnection destConn = new SqlConnection(GetConnectionString(_destServer, _destDb, _destUser, _destPassword, _destNetworkLibrary));
+            using DbConnection sourceConn = new SqlConnection(_scsb.ConnectionString);
+            using DbConnection destConn = new SqlConnection(_tcsb.ConnectionString);
 
             tablesToSkip ??= new List<string>();
 
@@ -115,15 +98,15 @@ namespace cdb.Common
             sourceConn.Open();
             destConn.Open();
 
-            var sourceTran = (SqlTransaction) sourceConn.BeginTransaction(IsolationLevel.Snapshot);
+            var sourceTran = (SqlTransaction) sourceConn.BeginTransaction(_isolationLevel);
             
-            if (!_myServer.ConnectionContext.IsOpen)
+            if (!_mySourceDbServer.ConnectionContext.IsOpen)
             {
-                _myServer.ConnectionContext.DatabaseName = _sourceDb;
-                _myServer.ConnectionContext.Connect();
+                _mySourceDbServer.ConnectionContext.DatabaseName = _sourceDb;
+                _mySourceDbServer.ConnectionContext.Connect();
             }
 
-            var db = _myServer.Databases[_sourceDb];
+            var db = _mySourceDbServer.Databases[_sourceDb];
 
             var tblIndex = 0;
             foreach (Table t in db.Tables)
@@ -164,39 +147,36 @@ namespace cdb.Common
         {
             try
             {
-                using (var cmd = sourceConn.CreateCommand())
+                using var cmd = sourceConn.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = $@"SELECT * FROM [{table.Schema}].[{table.Name}]";
+                if (!string.IsNullOrEmpty(strWhere))
                 {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = $@"SELECT * FROM [{table.Schema}].[{table.Name}]";
-                    if (!string.IsNullOrEmpty(strWhere))
-                    {
-                        cmd.CommandText += $@" WHERE {strWhere}";
-                    }
+                    cmd.CommandText += $@" WHERE {strWhere}";
+                }
 
-                    cmd.CommandTimeout = 3000000;
-                    cmd.Transaction = sourceTran;
+                cmd.CommandTimeout = 3000000;
+                cmd.Transaction = sourceTran;
 
-                    using (var bulkCopy = GetSqlBulkCopy(destConn)) // destTran
-                    using (var sourceDr = cmd.ExecuteReader(CommandBehavior.Default))
-                    {
-                        // Set the destination table name
-                        bulkCopy.DestinationTableName = $@"[{table.Schema}].[{table.Name}]";
+                using var bulkCopy = GetSqlBulkCopy(destConn);
+                using var sourceDr = cmd.ExecuteReader(CommandBehavior.Default);
 
-                        // Set the ColumnMappings and sort computed columns out
-                        foreach (var column in table.Columns.Cast<Column>().Where(column => !column.Computed))
-                        {
-                            bulkCopy.ColumnMappings.Add(column.Name, column.Name);
-                        }
+                // Set the destination table name
+                bulkCopy.DestinationTableName = $@"[{table.Schema}].[{table.Name}]";
 
-                        try
-                        {
-                            bulkCopy.WriteToServer(sourceDr);
-                        }
-                        catch (Exception e)
-                        {
-                            throw EvaluateException(e, bulkCopy);
-                        }
-                    }
+                // Set the ColumnMappings and sort computed columns out
+                foreach (var column in table.Columns.Cast<Column>().Where(column => !column.Computed))
+                {
+                    bulkCopy.ColumnMappings.Add(column.Name, column.Name);
+                }
+
+                try
+                {
+                    bulkCopy.WriteToServer(sourceDr);
+                }
+                catch (Exception e)
+                {
+                    throw EvaluateException(e, bulkCopy);
                 }
             }
             catch (Exception ex)
@@ -235,15 +215,13 @@ namespace cdb.Common
 
             var commandText = $"DELETE FROM [{table.Schema}].[{table.Name}]";
 
-            using (var cmd = con.CreateCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = commandText;
+            using var cmd = con.CreateCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.CommandText = commandText;
 
-                cmd.CommandTimeout = 30;
+            cmd.CommandTimeout = 30;
 
-                cmd.ExecuteNonQuery();
-            }
+            cmd.ExecuteNonQuery();
         }
 
         private Exception EvaluateException(Exception ex, SqlBulkCopy bulkCopy)

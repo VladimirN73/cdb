@@ -20,6 +20,8 @@ namespace cdb.Module.Console
         private const string param_finalScripts = "finalScripts";
         private const string param_updateScripts = "updateScripts";
 
+        private const string param_IsolationLevel = "IsolationLevel";
+
         public string strSkipTables;
         public string strRestoreTables;
         public string strUpdateScripts;
@@ -36,6 +38,8 @@ namespace cdb.Module.Console
             parser.TryGetParameterValue(parameterArray, param_finalScripts, out ret.strFinalScripts);
             parser.TryGetParameterValue(parameterArray, param_updateScripts, out ret.strUpdateScripts);
 
+            parser.TryGetParameterValue(parameterArray, param_IsolationLevel, out ret.IsolationLevel);
+
             return ret;
         }
 
@@ -51,19 +55,17 @@ namespace cdb.Module.Console
             str.AppendLine($@"{param_restoreTables,shift}: {par.restoreTables.Join()}");
             str.AppendLine($@"{param_finalScripts,shift}: {par.finalScripts.Join()}");
             str.AppendLine($@"{param_updateScripts,shift}: {par.updateScripts.Join()}");
-
+            str.AppendLine($@"{param_IsolationLevel,shift}: {par.IsolationLevel}");
             logger.Log(str.ToString());
         }
 
-        // Wenn einige Command-Line-Parameters fehlen
-        // dann diese aus App.Config nachladen
+        // if some Command-Line-Parameters are mising
+        // then try to load it from the config-file
         //
-        // Connection-Strings prüfen bzw. anpassen
+        // Connection-Strings check/adapt
         //
         public static CloneParametersExt AdaptParameters(CloneParametersExt cloneParams, IConfiguration config)
         {
-            
-            var list = config.GetSection("ConnectionStrings").GetChildren().ToList();
 
             // =================================================
             // db Source
@@ -115,7 +117,7 @@ namespace cdb.Module.Console
 
         private static string GetScriptFromFile(string fileName)
         {
-            AddLog($"Script '{fileName}' wird eingelesen");
+            AddLog($"Load the script '{fileName}'");
             if (!File.Exists(fileName))
             {
                 AddLog($"WARNING: File '{fileName}' not found");

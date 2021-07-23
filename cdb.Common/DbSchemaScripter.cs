@@ -18,11 +18,14 @@ namespace cdb.Common
         public DbSchemaScripter(string serverName, string userName, string password, string fileName)
         {
             _myServer = new Server(serverName);
+            _myServer.ConnectionContext.LoginSecure = true;
 
-            //Using windows authentication
-            _myServer.ConnectionContext.LoginSecure = false;
-            _myServer.ConnectionContext.Login = userName;
-            _myServer.ConnectionContext.Password = password;
+            if (!string.IsNullOrEmpty(userName))
+            {
+                _myServer.ConnectionContext.LoginSecure = false;
+                _myServer.ConnectionContext.Login = userName;
+                _myServer.ConnectionContext.Password = password;
+            }
 
             _fileName = fileName;
         }
