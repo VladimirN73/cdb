@@ -147,7 +147,8 @@ namespace cdb.Common
             var isNonProd =
                 str.Contains("localhost") ||
                 str.Contains("sql2019") ||
-                str.Contains("cdb_")   
+                str.Contains("cdb_") ||
+                str.Contains("blazor-")
                 ;
 
             if (isNonProd)
