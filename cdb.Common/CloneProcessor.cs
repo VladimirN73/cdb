@@ -715,6 +715,8 @@ namespace cdb.Common
             var server = new Server(consb.DataSource);
             server.ConnectionContext.LoginSecure = true;
 
+            server.ConnectionContext.DatabaseName = consb.InitialCatalog;
+
             if (!string.IsNullOrEmpty(consb.UserID))
             {
                 server.ConnectionContext.LoginSecure = false;
