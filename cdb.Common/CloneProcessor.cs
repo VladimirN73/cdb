@@ -147,7 +147,8 @@ namespace cdb.Common
             var isNonProd =
                 str.Contains("localhost") ||
                 str.Contains("sql2019") ||
-                str.Contains("cdb_")   
+                str.Contains("cdb_") ||
+                str.Contains("blazor-")
                 ;
 
             if (isNonProd)
@@ -713,6 +714,8 @@ namespace cdb.Common
         {
             var server = new Server(consb.DataSource);
             server.ConnectionContext.LoginSecure = true;
+
+            server.ConnectionContext.DatabaseName = consb.InitialCatalog;
 
             if (!string.IsNullOrEmpty(consb.UserID))
             {
