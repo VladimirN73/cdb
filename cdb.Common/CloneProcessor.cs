@@ -148,7 +148,7 @@ namespace cdb.Common
                 str.Contains("localhost") ||
                 str.Contains("sql2019") ||
                 str.Contains("cdb_") ||
-                str.Contains("blazor-")
+                str.Contains("blazor-") ||
                 str.EndsWith("-dev") ||
                 str.EndsWith("_dev")
                 ;
