@@ -148,6 +148,7 @@ namespace cdb.Common
                 str.Contains("localhost") ||
                 str.Contains("sql2019") ||
                 str.Contains("cdb_") ||
+                str.Contains("blazor-")
                 str.EndsWith("-dev") ||
                 str.EndsWith("_dev")
                 ;
@@ -715,6 +716,8 @@ namespace cdb.Common
         {
             var server = new Server(consb.DataSource);
             server.ConnectionContext.LoginSecure = true;
+
+            server.ConnectionContext.DatabaseName = consb.InitialCatalog;
 
             if (!string.IsNullOrEmpty(consb.UserID))
             {
