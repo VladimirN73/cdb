@@ -141,16 +141,20 @@ namespace cdb.Common
         {
             if (string.IsNullOrEmpty(connectionString)) return;
 
+            var str = connectionString.ToLower().Trim();
+
+            var builder = new SqlConnectionStringBuilder(str);
+            var dbName = builder.InitialCatalog;
+
             // TODO magic strings
             // Exclude PROD-DB from the target DBs
-            var str = connectionString.ToLower().Trim();
             var isNonProd =
                 str.Contains("localhost") ||
                 str.Contains("sql2019") ||
                 str.Contains("cdb_") ||
                 str.Contains("blazor-") ||
-                str.EndsWith("-dev") ||
-                str.EndsWith("_dev")
+                dbName.EndsWith("-dev") ||
+                dbName.EndsWith("_dev")
                 ;
 
             if (isNonProd)
@@ -158,7 +162,7 @@ namespace cdb.Common
                 return;
             }
 
-            throw new Exception("Prod-DB cannot used as a target DB ");
+            throw new Exception($"Prod-DB cannot used as a target DB: {dbName} ");
         }
 
         public void TraceConfigDatabases()
