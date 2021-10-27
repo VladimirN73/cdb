@@ -16,6 +16,7 @@ namespace cdb.Module.Console
         private const string param_dbSource = "dbSource";
         private const string param_dbTarget = "dbTarget";
         private const string param_skipTables = "skipTables";
+        private const string param_onlyTables = "onlyTables";
         private const string param_restoreTables = "restoreTables";
         private const string param_finalScripts = "finalScripts";
         private const string param_updateScripts = "updateScripts";
@@ -23,6 +24,7 @@ namespace cdb.Module.Console
         private const string param_IsolationLevel = "IsolationLevel";
 
         public string strSkipTables;
+        public string strOnlyTables;
         public string strRestoreTables;
         public string strUpdateScripts;
         public string strFinalScripts;
@@ -34,6 +36,7 @@ namespace cdb.Module.Console
             parser.TryGetParameterValue(parameterArray, param_dbSource, out ret.dbSource);
             parser.TryGetParameterValue(parameterArray, param_dbTarget, out ret.dbTarget);
             parser.TryGetParameterValue(parameterArray, param_skipTables, out ret.strSkipTables);
+            parser.TryGetParameterValue(parameterArray, param_onlyTables, out ret.strOnlyTables);
             parser.TryGetParameterValue(parameterArray, param_restoreTables, out ret.strRestoreTables);
             parser.TryGetParameterValue(parameterArray, param_finalScripts, out ret.strFinalScripts);
             parser.TryGetParameterValue(parameterArray, param_updateScripts, out ret.strUpdateScripts);
@@ -52,6 +55,7 @@ namespace cdb.Module.Console
             str.AppendLine($@"{param_dbSource,shift}: {par.dbSource}");
             str.AppendLine($@"{param_dbTarget,shift}: {par.dbTarget}");
             str.AppendLine($@"{param_skipTables,shift}: {par.skipTables.Join()}");
+            str.AppendLine($@"{param_onlyTables,shift}: {par.onlyTables.Join()}");
             str.AppendLine($@"{param_restoreTables,shift}: {par.restoreTables.Join()}");
             str.AppendLine($@"{param_finalScripts,shift}: {par.finalScripts.Join()}");
             str.AppendLine($@"{param_updateScripts,shift}: {par.updateScripts.Join()}");
@@ -82,6 +86,8 @@ namespace cdb.Module.Console
             // ==================================================
 
             cloneParams.skipTables = HelperConsole.GetListFromString(cloneParams.strSkipTables);
+            cloneParams.onlyTables = HelperConsole.GetListFromString(cloneParams.strOnlyTables);
+
             cloneParams.restoreTables = HelperConsole.GetListFromString(cloneParams.strRestoreTables);
 
             cloneParams.updateScripts = GetScriptsByPatternString(cloneParams.strUpdateScripts);

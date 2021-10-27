@@ -52,11 +52,12 @@ namespace cdb.Common
             var db = _myServer.Databases[database];
 
             //GenerateRoles(db);
+            GenerateUserDefinedDataTypes(db);
             GenerateDatabaseSchemas(db);
             GenerateTables(db);
             GenerateTableVariables(db);
-            //GenerateStoreProcedures(db);
-            //GenerateUserDefinedFunctions(db);
+            GenerateStoreProcedures(db);
+            GenerateUserDefinedFunctions(db);
             GenerateTableRestrictions(db);
             GenerateViews(db);
             GenerateDatabaseSchemaPermissions(db);
@@ -147,6 +148,56 @@ namespace cdb.Common
                 schema.Script(scriptOptions);
             }
         }
+
+        private void GenerateUserDefinedDataTypes(Database database)
+        {
+            HelperX.AddLog("Process UserDefinedTypes...");
+            var scriptOptions = new ScriptingOptions
+            {
+                FileName = _fileName,
+                AppendToFile = true,
+                ToFileOnly = true,
+                IncludeIfNotExists = true,
+                DriAll = false,
+                DriIncludeSystemNames = true,
+                NoCollation = true,
+                NoFileGroup = true,
+                Triggers = true,
+                SchemaQualifyForeignKeysReferences = true,
+                SchemaQualify = true
+            };
+
+            foreach (UserDefinedDataType item in database.UserDefinedDataTypes)
+            {
+                GenerateUserDefinedType(scriptOptions, item);
+            }
+        }
+
+        private void GenerateUserDefinedType(ScriptingOptions scriptOptions, UserDefinedDataType item)
+        {
+            try
+            {
+                HelperX.AddLog($"generate CREATE UserDefinedDataType '{item.Name}'");
+                
+                item.Script(scriptOptions);
+            }
+            catch (Exception ex)
+            {
+                // Wenn es nicht die erste Ausnahme ist, dann nicht mehr wiederholen
+                if (_lastRunWithError)
+                {
+                    _lastRunWithError = false; // reset flag
+                    throw;
+                }
+
+                HelperX.AddLog($@"Ignored (once) Exception: {ex.Message}");
+
+                _lastRunWithError = true;
+            }
+
+        }
+
+
 
         private void GenerateTables(Database database)
         {

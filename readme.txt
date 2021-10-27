@@ -7,6 +7,9 @@ github: https://github.com/VladimirN73/cdb
 -------------------------------------------------------
 Open Points (see also issues in github)
 -------------------------------------------------------
+*. skipTable - IS NOT USED NOW. TO BE FIXED.
+*. add param onlyTables - to transfer only these Tables. 
+*. skipTables - provide a pattern (or regex)
 *. iTest - ClearDatabase - ensure Exception if Clear.sql is not found
 *. Feature - Transfer Data for some tables. Do not re-create the target DB. Example: Transfer only SWIP Tables from Test to Int.
 *. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
@@ -25,6 +28,8 @@ Open Points (see also issues in github)
 ######				History 				###########
 ####################################################### 
 -------------------------------------------------------
+27.10.21
+add GenerateUserDefinedDataTypes
 23.07.21
 enable windows credentials and configurable IsolationLevel
 
