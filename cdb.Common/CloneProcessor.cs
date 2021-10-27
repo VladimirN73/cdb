@@ -153,6 +153,7 @@ namespace cdb.Common
                 str.Contains("sql2019") ||
                 str.Contains("cdb_") ||
                 str.Contains("blazor-") ||
+                dbName.Contains("-dev-") ||
                 dbName.EndsWith("-dev") ||
                 dbName.EndsWith("_dev")
                 ;
