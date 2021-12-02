@@ -7,6 +7,7 @@ github: https://github.com/VladimirN73/cdb
 -------------------------------------------------------
 Open Points (see also issues in github)
 -------------------------------------------------------
+*. fix issue "The specified schema name "wkb" either does not exist or you do not have permission to use it.", i.e. cdb shall be able to create schemas
 *. iTest - ClearDatabase - ensure Exception if Clear.sql is not found
 *. Feature - Transfer Data for some tables. Do not re-create the target DB. Example: Transfer only SWIP Tables from Test to Int.
 *. ConnectionString for Prod DB - do not use Admin-user, consider to use only a Read-user, to exclude risk of DB damage
@@ -25,6 +26,9 @@ Open Points (see also issues in github)
 ######				History 				###########
 ####################################################### 
 -------------------------------------------------------
+02.12.21
+add reference on Microsoft.SqlServer.Types in order to support more sql types (for example 'geolocation')
+
 19.05.21
 merged to main-branch
 
