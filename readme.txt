@@ -7,7 +7,7 @@ github: https://github.com/VladimirN73/cdb
 -------------------------------------------------------
 Open Points (see also issues in github)
 -------------------------------------------------------
-*. upgrade on .net 6
+*. create web-app
 *. fix issue "The specified schema name "wkb" either does not exist or you do not have permission to use it.", i.e. cdb shall be able to create schemas
 *. skipTable - IS NOT USED NOW. TO BE FIXED.
 *. add param onlyTables - to transfer only these Tables. 
@@ -29,7 +29,8 @@ Open Points (see also issues in github)
 History (newest on top) 
 -------------------------------------------------------
 21.01.22
-upgrate on .net 6
+update packages
+upgrade on .net 6
 
 02.12.21
 add reference on Microsoft.SqlServer.Types in order to support more sql types (for example 'geolocation')
