@@ -174,9 +174,9 @@ namespace cdb.Common
                 {
                     bulkCopy.WriteToServer(sourceDr);
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    throw EvaluateException(e, bulkCopy);
+                    throw EvaluateException(ex, bulkCopy);
                 }
             }
             catch (Exception ex)

@@ -3,9 +3,19 @@ name: .NET
 on:
   push:
     branches: [ main, dev ]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+  
   pull_request:
     branches: [ main, dev ]
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
 jobs:
   build:
 
@@ -16,7 +26,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
     - name: Restore dependencies
       run: dotnet restore
       

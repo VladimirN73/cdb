@@ -89,7 +89,8 @@ namespace cdb.Common.IntegrationTests
             {
                 dbSource = dbSource,
                 dbTarget = dbTarget,
-                skipTables = new List<string>{"*"}  // skip all
+                skipTables = new List<string>{"*"},  // skip all
+                IsolationLevel = IsolationLevel.ReadCommitted.ToString()
             };
 
             config.AdaptParameters(_config);
@@ -109,7 +110,8 @@ namespace cdb.Common.IntegrationTests
                 strSkipTables = "",
                 strRestoreTables = "",
                 strUpdateScripts = "",
-                strFinalScripts = ""
+                strFinalScripts = "",
+                IsolationLevel = IsolationLevel.ReadCommitted.ToString()
             };
             config.AdaptParameters(_config);
 

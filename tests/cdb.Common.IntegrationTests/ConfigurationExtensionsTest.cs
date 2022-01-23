@@ -36,8 +36,8 @@ namespace cdb.Common.IntegrationTests
         #endregion
 
 
-        [TestCase("dbSourceDB_", "Data Source=localhost;Initial Catalog=cdb_local_1")]
-        [TestCase("dbTargetDB_", "Data Source=localhost;Initial Catalog=cdb_local_2")]
+        [TestCase("dbSourceDB_test", "Data Source=localhost;Initial Catalog=cdb_local_1")]
+        [TestCase("dbTargetDB_test", "Data Source=localhost;Initial Catalog=cdb_local_2")]
         [TestCase("local_unknown", null)]
         public void GetConnectionString(string str, string strExpected)
         {
