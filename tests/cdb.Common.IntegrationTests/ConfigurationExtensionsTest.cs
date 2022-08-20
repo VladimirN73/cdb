@@ -2,57 +2,56 @@
 using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 
-namespace cdb.Common.IntegrationTests
+namespace cdb.Common.IntegrationTests;
+
+[TestFixture]
+public class ConfigurationExtensionsTest : TestBase
 {
-    [TestFixture]
-    public class ConfigurationExtensionsTest : TestBase
-    {
-        private IConfiguration _sut;
+    private IConfiguration _sut;
 
-        private TestContainer _di;
+    private TestContainer _di;
 
-        #region test setup
+    #region test setup
         
-        [OneTimeSetUp]
-        public void OneSetUp()
-        {
-            _di = new TestContainer();
+    [OneTimeSetUp]
+    public void OneSetUp()
+    {
+        _di = new TestContainer();
 
-            _sut = _di.Resolve<IConfiguration>();
+        _sut = _di.Resolve<IConfiguration>();
+    }
+
+    [SetUp]
+    public void SetUp()
+    {
+        StartTest();
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        WriteElapsedTime();
+    }
+
+    #endregion
+
+
+    [TestCase("dbSourceDB_test", "Data Source=localhost;Initial Catalog=cdb_local_1")]
+    [TestCase("dbTargetDB_test", "Data Source=localhost;Initial Catalog=cdb_local_2")]
+    [TestCase("local_unknown", null)]
+    public void GetConnectionString(string str, string strExpected)
+    {
+        var ret = _sut.GetConnectionStringByKey(str);
+
+        WriteInfo(ret);
+
+        if (strExpected == null)
+        {
+            Assert.IsNull(ret);
         }
-
-        [SetUp]
-        public void SetUp()
+        else
         {
-            StartTest();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            WriteElapsedTime();
-        }
-
-        #endregion
-
-
-        [TestCase("dbSourceDB_test", "Data Source=localhost;Initial Catalog=cdb_local_1")]
-        [TestCase("dbTargetDB_test", "Data Source=localhost;Initial Catalog=cdb_local_2")]
-        [TestCase("local_unknown", null)]
-        public void GetConnectionString(string str, string strExpected)
-        {
-            var ret = _sut.GetConnectionStringByKey(str);
-
-            WriteInfo(ret);
-
-            if (strExpected == null)
-            {
-                Assert.IsNull(ret);
-            }
-            else
-            {
-                Assert.IsTrue(ret.Contains(strExpected));
-            }
+            Assert.IsTrue(ret.Contains(strExpected));
         }
     }
 }
