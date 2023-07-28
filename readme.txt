@@ -28,6 +28,9 @@ Open Points (see also issues in github)
 -------------------------------------------------------
 History (newest on top) 
 -------------------------------------------------------
+28.07.23
+try to add qodana https://github.com/marketplace/actions/qodana-scan
+
 21.01.22
 update packages
 upgrade on .net 6
